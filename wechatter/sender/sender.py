@@ -374,6 +374,7 @@ def mass_send_msg(
                 # 由于是主动发送，所以没有msg_id
                 msg_id = ""
                 # 添加到发送队列
+                message = "是不是message的问题"
                 from wechatter.app.routers.qq_bot import qq_bot_instance
                 qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
                 logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
