@@ -184,8 +184,6 @@ def _send_msg1(
     :param type: 消息类型（text、fileUrl）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
-    if type == "localfile":
-        return _send_localfile_msg1(name, message, is_group)
 
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
@@ -204,9 +202,11 @@ def _send_msg1(
                 # 如果person有guild_id，说明是在qq频道私信
                 if person.guild_id is not None:
                     guild_id = person.guild_id
-                    # 添加到发送队列
-                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
-                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
+                    if type == "localfile":
+                        is_image = True
+                        # 添加到发送队列
+                        qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
+                        logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
                     
                 # 如果person有user_openid，说明是在qq私信
                 elif person.user_openid is not None:

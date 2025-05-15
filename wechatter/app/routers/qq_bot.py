@@ -71,7 +71,7 @@ class QQBot(botpy.Client):
         # 定义各队列的消息发送处理函数
         async def process_direct_message(msg_data):
             post_dms = ""
-            content, guild_id, msg_id = msg_data
+            content, guild_id, msg_id, is_image = msg_data
             try:
                 params = {
                     "content": content,
@@ -79,6 +79,9 @@ class QQBot(botpy.Client):
                 }
                 if msg_id is not None:
                     params["msg_id"] = msg_id
+                if is_image is True:
+                    params["file_image"] = content
+                    params["content"] = ""
                 post_dms = await self.api.post_dms(**params)
                 logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
