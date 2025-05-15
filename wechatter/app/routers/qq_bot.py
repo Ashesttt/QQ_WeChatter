@@ -72,11 +72,14 @@ class QQBot(botpy.Client):
             post_dms = ""
             content, guild_id, msg_id = msg_data
             try:
-                post_dms = await self.api.post_dms(
-                    content=content,
-                    guild_id=guild_id,
-                    msg_id=msg_id if msg_id is not None else None,
-                )
+                params = {
+                    "content": content,
+                    "guild_id": guild_id,
+                }
+                if msg_id is not None:
+                    params["msg_id"] = msg_id
+
+                post_dms = await self.api.post_dms(**params)
                 logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
             except Exception as e:
