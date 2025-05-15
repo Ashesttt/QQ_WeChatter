@@ -72,25 +72,26 @@ class QQBot(botpy.Client):
             post_dms = ""
             content, guild_id, msg_id = msg_data
             try:
-                post_dms = await self.api.post_dms(
-                    content=content,
-                    guild_id=guild_id,
-                    msg_id=msg_id,
-                )
-                print("这是post_dms")
-                print(post_dms)
+                params = {
+                    "content": content,
+                    "guild_id": guild_id,
+                }
+                if msg_id is not None:
+                    params["msg_id"] = msg_id
+                post_dms = await self.api.post_dms(**params)
+                logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 
             try:    
+                # 主动发送返回的post_dms:to_A:{'code': 304023, 'message': '消息提交安全审核成功', 'data': {'message_audit': {'audit_id': 'a542254e-7390-4ec0-81a9-9b03e5df41e5'}}, 'err_code': 40034120, 'trace_id': '490b134028f32983479ee42ccc7d1424'}
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
-                _content = post_dms.get("content")
                 _msg_id = post_dms.get("id")
                 message_obj = Message(
                     type=MessageType.text,
                     person=self.qqrobot_person,
-                    content=_content,
+                    content=content,
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
@@ -122,8 +123,7 @@ class QQBot(botpy.Client):
                     msg_id=str(last_group_msg_id),
                     msg_seq=last_group_msg_seq,
                 )
-                print("这是post_group_message")
-                print(post_group_message)
+                logger.debug(f"这是post_group_message：\n{post_group_message}")
                 logger.info(f"QQ群聊@消息发送成功")
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
@@ -162,8 +162,7 @@ class QQBot(botpy.Client):
                     msg_id=last_c2c_msg_id,
                     msg_seq=str(last_c2c_msg_seq),
                 )
-                print("这是post_c2c_message:")
-                print(post_c2c_message)
+                logger.debug(f"这是post_c2c_message：\n{post_c2c_message}")
                 logger.info(f"QQ私聊消息发送成功")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
@@ -242,7 +241,8 @@ class QQBot(botpy.Client):
                     # 图片处理逻辑
                     _type = MessageType.file
         # 构建source
-        author_dict = json.loads(json.dumps({"id": message.author.id, "username": message.author.username, "avatar": message.author.avatar}))
+        # message.author.id没有用，message.guild_id才有用，用作qq频道私信fa发送信息的的guild_id
+        author_dict = json.loads(json.dumps({"id": message.guild_id, "username": message.author.username, "avatar": message.author.avatar}))
 
         # 构建source字典
         source_dict = {

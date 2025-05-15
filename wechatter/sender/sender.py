@@ -365,14 +365,14 @@ def mass_send_msg(
         with make_db_session() as session:
             person = session.query(DbPerson).filter(DbPerson.name == name).first()
             if person and person.id is not None:
-                guild_id = person.id
+                guild_id = str(person.id)
                 # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
                 #  能否在qq_bot.py的process_group_at_message方法中加入
                 #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
                 #                 msg_id == last_group_msg_id
                 
                 # 由于是主动发送，所以没有msg_id
-                msg_id = ""
+                msg_id = None
                 # 添加到发送队列
                 from wechatter.app.routers.qq_bot import qq_bot_instance
                 qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
