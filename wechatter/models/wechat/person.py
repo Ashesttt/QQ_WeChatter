@@ -31,6 +31,11 @@ class Person(BaseModel):
     is_friend: bool
     is_official_account: bool = False
     is_gaming: bool = False
+    # TODO：数据库也添加上：（为了实现管理人员功能）（收到信息，取到guild_id或其他id，判断是否为管理人员）
+    guild_id:  Optional[str] = None # qq频道私聊
+    msg_id: Optional[str] = None
+    member_openid: Optional[str] = None # qq群
+    user_openid: Optional[str] = None # qq私聊
 
     def to_dict(self):
         result = self.__dict__.copy()

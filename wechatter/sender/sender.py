@@ -9,7 +9,8 @@ import tenacity
 from loguru import logger
 
 from wechatter.config import config
-from wechatter.models.wechat import QuotedResponse, SendTo
+from wechatter.models import Person
+from wechatter.models.wechat import QuotedResponse, SendTo, Group
 from wechatter.sender.quotable import make_quotable
 from wechatter.utils import join_urls, post_request
 
@@ -171,6 +172,9 @@ def _send_msg1(
     is_group: bool = False,
     type: str = "text",
     quoted_response: QuotedResponse = None,
+    platform = "qq",
+    person: Person = None,
+    group: Group = None,
 ):
     """
     发送消息
@@ -186,13 +190,40 @@ def _send_msg1(
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
 
-    data = {
-        "to": name,
-        "isRoom": is_group,
-        "data": {"type": type, "content": message},
-    }
-    _post_request(URL, json=data)
-
+    
+    # 如果是QQ平台
+    if platform == "qq":
+        from wechatter.app.routers.qq_bot import qq_bot_instance
+        print("QQ消息发送中...")
+        if qq_bot_instance:
+            # 如果要发送给个人就有person
+            if person:
+                print("这是person:")
+                print(person)
+                msg_id = person.msg_id
+                # 如果person有guild_id，说明是在qq频道私信
+                if person.guild_id is not None:
+                    guild_id = person.guild_id
+                    # 添加到发送队列
+                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
+                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
+                    
+                # 如果person有user_openid，说明是在qq私信
+                elif person.user_openid is not None:
+                    user_openid = person.user_openid
+                    # 添加到发送队列
+                    qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id))
+                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}。")
+                
+            if group:
+                print("这是group:")
+                print(group)
+                group_openid = group.id
+                msg_id = group.msg_id
+                # 添加到发送队列
+                qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group))
+                
+    return
 
 @send_msg.register(SendTo)
 def _send_msg2(
@@ -226,6 +257,7 @@ def _send_msg2(
             is_group=True,
             type=type,
             quoted_response=quoted_response,
+            group=to.group
         )   
     elif to.person:
         return _send_msg1(
@@ -234,6 +266,7 @@ def _send_msg2(
             is_group=False,
             type=type,
             quoted_response=quoted_response,
+            person=to.person
         )
     else:
         logger.error("发送消息失败，接收者为空")
