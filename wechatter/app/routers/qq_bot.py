@@ -123,8 +123,7 @@ class QQBot(botpy.Client):
                     msg_id=str(last_group_msg_id),
                     msg_seq=last_group_msg_seq,
                 )
-                print("这是post_group_message")
-                print(post_group_message)
+                logger.debug(f"这是post_group_message：\n{post_group_message}")
                 logger.info(f"QQ群聊@消息发送成功")
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
@@ -163,8 +162,7 @@ class QQBot(botpy.Client):
                     msg_id=last_c2c_msg_id,
                     msg_seq=str(last_c2c_msg_seq),
                 )
-                print("这是post_c2c_message:")
-                print(post_c2c_message)
+                logger.debug(f"这是post_c2c_message：\n{post_c2c_message}")
                 logger.info(f"QQ私聊消息发送成功")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
