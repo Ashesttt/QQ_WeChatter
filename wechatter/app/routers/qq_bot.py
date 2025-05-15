@@ -19,6 +19,7 @@ from wechatter.games import games
 from wechatter.message import MessageHandler
 from wechatter.models.wechat import Message, MessageType
 from wechatter.models.wechat.person import Person, Gender
+from wechatter.sender import notifier
 
 # 传入命令字典，构造消息处理器
 message_handler = MessageHandler(
@@ -32,6 +33,7 @@ class QQBot(botpy.Client):
     async def on_ready(self):
         """机器人就绪事件"""
         logger.info(f"机器人 {self.robot.name} 已就绪")
+        notifier.notify_logged_in()
         # user = await self.api.me()
         BotInfo.update_name(self.robot.name)
         BotInfo.update_id(self.robot.id)

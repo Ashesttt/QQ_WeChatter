@@ -24,7 +24,7 @@ def notify_logged_in():
     """
     通知登录成功
     """
-    msg = "微信机器人启动成功"
+    msg = "WeChatter机器人启动成功"
     logger.info(msg)
     sender.mass_send_msg_to_admins(msg)
     if config.get("bark_url"):
