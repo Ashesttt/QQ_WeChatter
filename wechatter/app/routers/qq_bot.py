@@ -75,7 +75,7 @@ class QQBot(botpy.Client):
                 post_dms = await self.api.post_dms(
                     content=content,
                     guild_id=guild_id,
-                    msg_id=msg_id,
+                    msg_id=msg_id if msg_id is not None else None,
                 )
                 print("这是post_dms")
                 print(post_dms)
