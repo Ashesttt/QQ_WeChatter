@@ -206,7 +206,7 @@ def _send_msg1(
                         is_image = True
                         # 添加到发送队列
                         qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
-                        logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
+                        logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
                     
                 # 如果person有user_openid，说明是在qq私信
                 elif person.user_openid is not None:

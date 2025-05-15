@@ -84,7 +84,7 @@ class QQBot(botpy.Client):
                     params["content"] = ""
                 post_dms = await self.api.post_dms(**params)
                 logger.debug(f"这是post_dms：\n{post_dms}")
-                logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
+                logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 
@@ -202,9 +202,11 @@ class QQBot(botpy.Client):
                 queue = getattr(self, queue_name, [])
                 if queue:
                     # 获取并处理一条消息
+                    logger.debug(f"正在处理队列任务：{queue_name}:\n{queue}")
                     msg_data = queue.pop(0)
                     await handler(msg_data)
                     processed_any = True
+                    logger.debug(f"处理完成队列任务：{queue_name}:\n{queue}")
     
             # 如果所有队列都为空，等待一段时间再检查
             if not processed_any:
