@@ -358,15 +358,36 @@ def mass_send_msg(
         message = make_quotable(message=message, quoted_response=quoted_response)
 
     for name in name_list:
-        data = [
-            {
-                "to": name,
-                "isRoom": is_group,
-                "data": {"type": type, "content": message},
-            }
-        ]
-        _post_request(URL, json=data)
-        time.sleep(random.uniform(5, 6))  # 避免触发风控，使用 5-6 秒之间的随机数
+        # 只有qq频道才可以主动发送信息
+        # 通过name获取guild_id(就是person的id)
+        from wechatter.database.tables.person import Person as DbPerson
+        from wechatter.database import make_db_session
+        with make_db_session() as session:
+            person = session.query(DbPerson).filter(DbPerson.name == name).first()
+            if person and person.id is not None:
+                guild_id = person.id
+                # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
+                #  能否在qq_bot.py的process_group_at_message方法中加入
+                #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
+                #                 msg_id == last_group_msg_id
+                
+                # 由于是主动发送，所以没有msg_id
+                msg_id = ""
+                # 添加到发送队列
+                from wechatter.app.routers.qq_bot import qq_bot_instance
+                qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
+                logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
+        
+        
+        # data = [
+        #     {
+        #         "to": name,
+        #         "isRoom": is_group,
+        #         "data": {"type": type, "content": message},
+        #     }
+        # ]
+        # _post_request(URL, json=data)
+        # time.sleep(random.uniform(5, 6))  # 避免触发风控，使用 5-6 秒之间的随机数
 
 
 @singledispatch
