@@ -78,7 +78,7 @@ class QQBot(botpy.Client):
                 }
                 if msg_id is not None:
                     params["msg_id"] = msg_id
-
+                print(f"这是params：{params}")
                 post_dms = await self.api.post_dms(**params)
                 logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
