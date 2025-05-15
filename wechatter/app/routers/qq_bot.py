@@ -77,8 +77,7 @@ class QQBot(botpy.Client):
                     guild_id=guild_id,
                     msg_id=msg_id if msg_id is not None else None,
                 )
-                print("这是post_dms")
-                print(post_dms)
+                logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")

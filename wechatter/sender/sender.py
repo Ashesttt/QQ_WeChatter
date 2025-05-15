@@ -373,14 +373,6 @@ def mass_send_msg(
                 
                 # 由于是主动发送，所以没有msg_id
                 msg_id = ""
-                # message = """
-                # == GitHub Ping 事件 ==
-                # ️ 有 Ping 事件！
-                #  ZEN：Keep it logically awesome.
-                #  仓库：Ashesttt/QQ_WeChatter
-                # ‍ 触发者：Ashesttt
-                # """                
-                message = "6666666666"
                 # 添加到发送队列
                 from wechatter.app.routers.qq_bot import qq_bot_instance
                 qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
