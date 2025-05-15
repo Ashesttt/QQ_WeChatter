@@ -78,7 +78,6 @@ class QQBot(botpy.Client):
                 }
                 if msg_id is not None:
                     params["msg_id"] = msg_id
-                print(f"这是params：{params}")
                 post_dms = await self.api.post_dms(**params)
                 logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}")
@@ -86,13 +85,13 @@ class QQBot(botpy.Client):
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 
             try:    
+                # 主动发送返回的post_dms:to_A:{'code': 304023, 'message': '消息提交安全审核成功', 'data': {'message_audit': {'audit_id': 'a542254e-7390-4ec0-81a9-9b03e5df41e5'}}, 'err_code': 40034120, 'trace_id': '490b134028f32983479ee42ccc7d1424'}
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
-                _content = post_dms.get("content")
                 _msg_id = post_dms.get("id")
                 message_obj = Message(
                     type=MessageType.text,
                     person=self.qqrobot_person,
-                    content=_content,
+                    content=content,
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
