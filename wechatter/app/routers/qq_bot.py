@@ -33,8 +33,6 @@ class QQBot(botpy.Client):
     async def on_ready(self):
         """机器人就绪事件"""
         logger.info(f"机器人 {self.robot.name} 已就绪")
-        notifier.notify_logged_in()
-        # user = await self.api.me()
         BotInfo.update_name(self.robot.name)
         BotInfo.update_id(self.robot.id)
         self.qqrobot_person = Person(
@@ -58,6 +56,7 @@ class QQBot(botpy.Client):
         # 启动消息处理任务
         import asyncio
         self._process_message_task = asyncio.create_task(self._process_message_queue())
+        notifier.notify_logged_in()
 
     async def _process_message_queue(self):
         """处理所有消息队列的异步任务"""
