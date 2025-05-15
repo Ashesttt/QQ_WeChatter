@@ -244,7 +244,8 @@ class QQBot(botpy.Client):
                     # 图片处理逻辑
                     _type = MessageType.file
         # 构建source
-        author_dict = json.loads(json.dumps({"id": message.author.id, "username": message.author.username, "avatar": message.author.avatar}))
+        # message.author.id没有用，message.guild_id才有用，用作qq频道私信fa发送信息的的guild_id
+        author_dict = json.loads(json.dumps({"id": message.guild_id, "username": message.author.username, "avatar": message.author.avatar}))
 
         # 构建source字典
         source_dict = {
