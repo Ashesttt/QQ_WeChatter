@@ -235,7 +235,8 @@ def _execute_quoted_handler(
     if quoted_handler:
         quoted_handler(
             to=to,
-            message=message_obj.pure_content,
+            # message=message_obj.pure_content,
+            message=message_obj.content,
             q_response=quoted_response.response,
         )
     else:

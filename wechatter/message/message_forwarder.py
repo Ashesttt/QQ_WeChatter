@@ -128,7 +128,8 @@ class MessageForwarder:
         name, is_group = message_obj.forwarded_source_name
         sender.send_msg(
             name,
-            message_obj.pure_content,
+            # message_obj.pure_content,
+            message_obj.content,
             is_group=is_group,
         )
         logger.info(f"回复 {message_obj.forwarded_source_name} 的转发消息")

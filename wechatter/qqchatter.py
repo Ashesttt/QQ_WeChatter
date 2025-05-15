@@ -12,8 +12,8 @@ import uvicorn
 
 import wechatter.database as db
 from wechatter.app.app import app
+from wechatter.app.routers.qq_bot import create_qq_bot
 from wechatter.art_text import print_wechatter_art_text
-from wechatter.bot import BotInfo, create_qq_bot
 from wechatter.config import config
 from wechatter.games import load_games
 from wechatter.utils import check_and_create_folder

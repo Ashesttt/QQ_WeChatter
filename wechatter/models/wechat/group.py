@@ -24,6 +24,7 @@ class Group(BaseModel):
     admin_id_list: Optional[List[str]] = None
     member_list: List[GroupMember]
     is_gaming: bool = False
+    msg_id: Optional[str] = None
 
     def to_dict(self):
         result = self.__dict__.copy()

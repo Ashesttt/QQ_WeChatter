@@ -40,6 +40,7 @@ class Message(Base):
     gpt_chat_message: Mapped[Union["GptChatMessage", None]] = relationship(
         "GptChatMessage", back_populates="message", uselist=False
     )
+    msg_id: Mapped[Union[str, None]] = mapped_column(String, nullable=True)
 
     @classmethod
     def from_model(cls, message_model: MessageModel):
@@ -55,6 +56,7 @@ class Message(Base):
             content=message_model.content,
             is_mentioned=message_model.is_mentioned,
             is_quoted=message_model.is_quoted,
+            msg_id=message_model.msg_id,
         )
 
     def to_model(self) -> MessageModel:
@@ -65,4 +67,5 @@ class Message(Base):
             group=self.group.to_model() if self.group else None,
             content=self.content,
             is_mentioned=self.is_mentioned,
+            msg_id=self.msg_id,
         )
