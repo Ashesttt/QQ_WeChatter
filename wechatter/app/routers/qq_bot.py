@@ -1,4 +1,5 @@
 import json
+import os
 
 import botpy
 from botpy.message import DirectMessage, GroupMessage, C2CMessage
@@ -83,6 +84,9 @@ class QQBot(botpy.Client):
                     params["file_image"] = content
                     params["content"] = ""
                 post_dms = await self.api.post_dms(**params)
+                # # 避免磁盘空间浪费，但没必要
+                # if is_image is True and os.path.exists(content):
+                #     os.remove(content)
                 logger.debug(f"这是post_dms：\n{post_dms}")
                 logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:

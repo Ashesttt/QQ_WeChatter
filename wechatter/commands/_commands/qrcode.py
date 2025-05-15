@@ -26,9 +26,10 @@ def qrcode_command_handler(to: Union[str, SendTo], message: str = "") -> None:
         sender.send_msg(to, error_message)
     else:
         sender.send_msg(to, path, type="localfile")
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
+    # 由于qq机器人时异步执行的，会发生还没发送完成，文件就被删掉了，因此把os.remove(path)移至发送完成的后边
+    # finally:
+    #     if os.path.exists(path):
+    #         os.remove(path)
 
 
 @qrcode_command_handler.mainfunc
