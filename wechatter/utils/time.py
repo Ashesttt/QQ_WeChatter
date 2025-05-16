@@ -50,6 +50,13 @@ def get_current_datetime() -> str:
     """
     return time.strftime("%y-%m-%d_%H-%M-%S", time.localtime())
 
+def get_current_datetime2() -> str:
+    """
+    获取当前时间
+    :return: 返回格式化后的时间字符串
+    """
+    return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
 
 def get_current_date() -> str:
     """
