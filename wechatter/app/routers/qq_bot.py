@@ -191,25 +191,40 @@ class QQBot(botpy.Client):
                 logger.debug(f"qq机器人的消息已保存，id：{message_obj.id}")
             except  Exception as e:
                 logger.error(f"保存qq机器人消息失败: {str(e)}")
-    
+
         async def process_c2c_message(msg_data):
-            nonlocal last_c2c_msg_id, last_c2c_msg_seq
+            nonlocal last_c2c_msg_id, last_c2c_msg_seq, last_c2c_msg_time
             post_c2c_message = ""
             # 实现私聊消息发送逻辑
             content, user_openid, msg_id, is_image = msg_data
-            if msg_id == last_c2c_msg_id:
-                last_c2c_msg_seq += 1
-            else:
+        
+            # 获取当前时间戳
+            _current_time = get_current_timestamp()
+            # 如果收到新消息(msg_id不为None)，而且msg_id与上次的msg_id不同，则发送消息，更新最后消息ID和时间
+            if msg_id is not None and msg_id != last_c2c_msg_id:
                 last_c2c_msg_id = msg_id
+                last_c2c_msg_time = _current_time
                 last_c2c_msg_seq = 1
-            
+            # 如果msg_id为空，代表这个消息任务是主动发送的，检查上一条消息ID是否在有效期内
+            elif last_c2c_msg_id and (_current_time - last_c2c_msg_time < MSG_ID_EXPIRY):
+                if last_c2c_msg_seq >= 5:
+                    qq_bot_instance._blocking_c2c_queue.append((content, user_openid, msg_id, is_image))
+                    logger.warning(f"msg_seq已达到上限(5)，添加到阻塞消息队列(_blocking_c2c_queue)，信息是：{content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
+                    return f"信息已加入阻塞队列，请耐心等待发送完成，需要有新消息才能激活发送。"
+                msg_id = last_c2c_msg_id
+                last_c2c_msg_seq += 1
+            # 如果上一条消息ID没有或已过期，将消息添加到阻塞队列
+            else:
+                qq_bot_instance._blocking_c2c_queue.append((content, user_openid, msg_id, is_image))
+                logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_c2c_queue)，信息是：{content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
+                return f"信息已加入阻塞队列，请耐心等待发送完成，需要私聊机器人，即可发送。"
+        
             try:
                 params = {
                     "openid": user_openid,
+                    "msg_id": str(last_c2c_msg_id),
                     "msg_seq": last_c2c_msg_seq
                 }
-                if msg_id is not None:
-                    params["msg_id"] = str(last_c2c_msg_id)
                 if is_image is True:
                     uploadMedia = await self.api.post_c2c_file(
                         openid=user_openid,
@@ -221,27 +236,25 @@ class QQBot(botpy.Client):
                     params["msg_type"] = 7
                 else:
                     params["content"] = content
-
-
+        
                 post_c2c_message = await self.api.post_c2c_message(**params)
                 logger.debug(f"这是post_c2c_message：\n{post_c2c_message}")
-                logger.success(f"QQ私聊消息发送成功")
+                logger.success(f"QQ私聊消息发送成功，内容：{content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
-                
+        
             try:
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
-                _content = content
                 _msg_id = post_c2c_message.get("id")
                 message_obj = Message(
                     type=MessageType.text,
                     person=self.qqrobot_person,
-                    content=_content,
+                    content=content,
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
                 logger.debug(f"qq机器人的消息已保存，id：{message_obj.id}")
-            except  Exception as e:
+            except Exception as e:
                 logger.error(f"保存qq机器人消息失败: {str(e)}")
 
     
