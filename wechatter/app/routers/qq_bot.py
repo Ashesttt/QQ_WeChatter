@@ -96,7 +96,7 @@ class QQBot(botpy.Client):
                 # if is_image is True and os.path.exists(content):
                 #     os.remove(content)
                 logger.debug(f"这是post_dms：\n{post_dms}")
-                logger.info(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
+                logger.success(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 
@@ -111,7 +111,7 @@ class QQBot(botpy.Client):
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
-                logger.info(f"qq机器人的消息已保存，id：{message_obj.id}")
+                logger.debug(f"qq机器人的消息已保存，id：{message_obj.id}")
             except  Exception as e:
                 logger.error(f"保存qq机器人消息失败: {str(e)}")
 
@@ -170,7 +170,7 @@ class QQBot(botpy.Client):
                     
                 post_group_message = await self.api.post_group_message(**params)
                 logger.debug(f"这是post_group_message：\n{post_group_message}")
-                logger.info(f"QQ群聊@消息发送成功")
+                logger.success(f"QQ群聊@消息发送成功")
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
 
@@ -186,7 +186,7 @@ class QQBot(botpy.Client):
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
-                logger.info(f"qq机器人的消息已保存，id：{message_obj.id}")
+                logger.debug(f"qq机器人的消息已保存，id：{message_obj.id}")
             except  Exception as e:
                 logger.error(f"保存qq机器人消息失败: {str(e)}")
     
@@ -223,7 +223,7 @@ class QQBot(botpy.Client):
 
                 post_c2c_message = await self.api.post_c2c_message(**params)
                 logger.debug(f"这是post_c2c_message：\n{post_c2c_message}")
-                logger.info(f"QQ私聊消息发送成功")
+                logger.success(f"QQ私聊消息发送成功")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
                 
@@ -238,7 +238,7 @@ class QQBot(botpy.Client):
                     msg_id=_msg_id,
                 )
                 message_obj.id = add_message(message_obj)
-                logger.info(f"qq机器人的消息已保存，id：{message_obj.id}")
+                logger.debug(f"qq机器人的消息已保存，id：{message_obj.id}")
             except  Exception as e:
                 logger.error(f"保存qq机器人消息失败: {str(e)}")
 
@@ -258,7 +258,7 @@ class QQBot(botpy.Client):
                 queue = getattr(self, queue_name, [])
                 if queue:
                     # 获取并处理一条消息
-                    logger.info(f"正在处理队列任务：{queue_name}:\n{queue}")
+                    logger.warning(f"正在处理队列任务：{queue_name}:\n{queue}")
                     msg_data = queue.pop(0)
                     await handler(msg_data)
                     processed_any = True
@@ -465,17 +465,17 @@ class QQBot(botpy.Client):
 
         # 处理阻塞队列中的消息
         if hasattr(self, '_blocking_group_queue') and self._blocking_group_queue:
-            logger.info(f"收到新消息，尝试处理阻塞队列中的消息，当前队列长度：{len(self._blocking_group_queue)}")
-            logger.debug(f"阻塞队列:{self._blocking_group_queue}")
+            logger.warning(f"收到新消息，尝试处理阻塞队列中的消息，当前队列长度：{len(self._blocking_group_queue)}")
+            logger.warning(f"阻塞队列:{self._blocking_group_queue}")
             # 最多处理5条消息（因为一个msg_id最多只能回复5次）
             messages_to_process = min(5, len(self._blocking_group_queue))
-            logger.debug(f"本次将处理 {messages_to_process} 条阻塞消息")
+            logger.warning(f"本次将处理 {messages_to_process} 条阻塞消息")
     
             # 将部分阻塞队列消息添加到正常队列
             for i in range(messages_to_process):
                 blocked_msg = self._blocking_group_queue.pop(0)  # 从队列头部取出消息
                 self._group_at_message_queue.append(blocked_msg)
-            logger.debug(f"处理后阻塞队列剩余 {len(self._blocking_group_queue)} 条消息")
+            logger.warning(f"处理后阻塞队列剩余 {len(self._blocking_group_queue)} 条消息")
 
     async def on_c2c_message_create(self, message: C2CMessage):
         """
