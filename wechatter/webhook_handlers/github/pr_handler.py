@@ -20,7 +20,7 @@ def handle_pr(data: dict):
             f"📝 标题：{payload.pull_request.title}\n"
             f"🧑‍💻 合并者：{payload.pull_request.merged_by.login}\n"
             f"🔀 '{payload.pull_request.base.ref}' ⬅ '{payload.pull_request.head.ref}'\n"
-            f"🔗 查看详情：{payload.pull_request.html_url}"
+            # f"🔗 查看详情：{payload.pull_request.html_url}"
         )
         sender.mass_send_msg_to_github_webhook_receivers(message)
         return
@@ -31,6 +31,6 @@ def handle_pr(data: dict):
         f"🌱 分支: {payload.pull_request.head.ref}\n"
         f"📝 标题：{payload.pull_request.title}\n"
         f"🧑‍💻 创建者：{payload.pull_request.user.login}\n"
-        f"🔗 查看详情：{payload.pull_request.html_url}"
+        # f"🔗 查看详情：{payload.pull_request.html_url}"
     )
     sender.mass_send_msg_to_github_webhook_receivers(message)

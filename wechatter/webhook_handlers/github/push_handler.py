@@ -24,6 +24,7 @@ def handle_push(data: dict):
     if len(payload.commits) != 0:
         # 最后一个commit的message
         message += f"📃 提交信息：{payload.commits.pop().message}\n"
-    message += f"🔗 查看详情：{branch_url}"
+    # message += f"🔗 查看详情：{branch_url}"
+    # TODO：域名下来了，就可以在QQ开发管理那里配置消息URL，才可发送URL
 
     sender.mass_send_msg_to_github_webhook_receivers(message)

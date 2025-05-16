@@ -19,7 +19,7 @@ def handle_release(data: dict):
         f"📚 仓库：{payload.repository.full_name}\n"
         f"🏷️ 版本：{payload.release.tag_name}\n"
         f"🧑‍💻 提交者：{payload.sender.login}\n"
-        f"🔗 查看详情：{payload.release.html_url}"
+        # f"🔗 查看详情：{payload.release.html_url}"
     )
 
     sender.mass_send_msg_to_github_webhook_receivers(message)
