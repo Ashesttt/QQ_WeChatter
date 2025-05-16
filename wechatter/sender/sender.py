@@ -204,8 +204,7 @@ def _send_msg1(
         if qq_bot_instance:
             # 如果要发送给个人就有person
             if person:
-                print("这是person:")
-                print(person)
+                logger.debug(f"这是person:{person}")
                 msg_id = person.msg_id
                 # 如果person有guild_id，说明是在qq频道私信
                 if person.guild_id is not None:
@@ -222,8 +221,7 @@ def _send_msg1(
                     logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
                 
             if group:
-                print("这是group:")
-                print(group)
+                logger.debug(f"这是group:{group}")
                 group_openid = group.id
                 msg_id = group.msg_id
                 # 添加到发送队列
@@ -355,6 +353,8 @@ def mass_send_msg(
     :param type: 消息类型（text、fileUrl、localfile）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
+    # 由于是主动发送，所以没有msg_id
+    msg_id = None
     is_image = False
     if type == "localfile":
         is_image = True
@@ -371,22 +371,34 @@ def mass_send_msg(
         # 通过name获取guild_id(就是person的id)
         from wechatter.database.tables.person import Person as DbPerson
         from wechatter.database import make_db_session
-        with make_db_session() as session:
-            person = session.query(DbPerson).filter(DbPerson.name == name).first()
-            if person and person.id is not None:
-                guild_id = str(person.id)
-                # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
-                #  能否在qq_bot.py的process_group_at_message方法中加入
-                #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
-                #                 msg_id == last_group_msg_id
+        if not is_group:
+            with make_db_session() as session:
+                person = session.query(DbPerson).filter(DbPerson.name == name).first()
+                if person and person.id is not None:
+                    guild_id = str(person.id)
+                    # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
+                    #  能否在qq_bot.py的process_group_at_message方法中加入
+                    #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
+                    #                 msg_id == last_group_msg_id
+                    
+                    # 添加到发送队列
+                    from wechatter.app.routers.qq_bot import qq_bot_instance
+                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
+                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
+        else:
+            # 是群，因此name就是群group_openid
+            group_openid = name
+            logger.debug(f"group_openid:{group_openid}")
+            group = Group(
+                id=group_openid,
+                name=group_openid,
+                member_list=[],
+            )
+            # 添加到发送队列
+            qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group, is_image))
+            logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
+            
                 
-                # 由于是主动发送，所以没有msg_id
-                msg_id = None
-                # 添加到发送队列
-                from wechatter.app.routers.qq_bot import qq_bot_instance
-                qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
-                logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
-        
         
         # data = [
         #     {

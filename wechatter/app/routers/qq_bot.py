@@ -3,7 +3,6 @@ import os
 
 import botpy
 from botpy.message import DirectMessage, GroupMessage, C2CMessage
-from botpy.types.message import Reference, MarkdownPayload, MessageMarkdownParams
 from loguru import logger
 
 from wechatter.bot import BotInfo
@@ -21,6 +20,7 @@ from wechatter.message import MessageHandler
 from wechatter.models.wechat import Message, MessageType
 from wechatter.models.wechat.person import Person, Gender
 from wechatter.sender import notifier
+from wechatter.utils.time import get_current_timestamp
 
 # 传入命令字典，构造消息处理器
 message_handler = MessageHandler(
@@ -53,7 +53,9 @@ class QQBot(botpy.Client):
         self._group_at_message_queue = []
         # 初始化qq私聊消息队列
         self._c2c_message_queue = []
-    
+        # 初始化阻塞队列
+        self._blocking_group_queue = []
+        self._blocking_c2c_queue = []
         # 启动消息处理任务
         import asyncio
         self._process_message_task = asyncio.create_task(self._process_message_queue())
@@ -65,9 +67,14 @@ class QQBot(botpy.Client):
 
         last_group_msg_id = ""
         last_group_msg_seq = 1
-        
+        last_group_msg_time = 0  # 记录最后一条群消息的时间戳
+    
         last_c2c_msg_id = ""
         last_c2c_msg_seq  = 1
+        last_c2c_msg_time = 0  # 记录最后一条私聊消息的时间戳
+        
+        # 定义msg_id有效期(秒)
+        MSG_ID_EXPIRY = 300  # 5分钟
     
         # 定义各队列的消息发送处理函数
         async def process_direct_message(msg_data):
@@ -110,7 +117,7 @@ class QQBot(botpy.Client):
 
             
         async def process_group_at_message(msg_data):
-            nonlocal last_group_msg_id, last_group_msg_seq
+            nonlocal last_group_msg_id, last_group_msg_seq, last_group_msg_time
             post_group_message = ""
             # 实现群聊@消息发送逻辑
             content, group_openid, msg_id, group, is_image = msg_data
@@ -119,19 +126,35 @@ class QQBot(botpy.Client):
                 因此，先记录下这次的msg_id为last_group_msg_id，然后下次消息队列又来消息时，如果msg_id与last_group_msg_id相同，
                 则将msg_seq+1，然后发送。
             """
-            if msg_id == last_group_msg_id:
-                last_group_msg_seq += 1
-            else:
+            # 获取当前时间戳
+            _current_time = get_current_timestamp()
+            # 如果收到新消息(msg_id不为None)，更新最后消息ID和时间
+            if msg_id is not None:
                 last_group_msg_id = msg_id
+                last_group_msg_time = _current_time
                 last_group_msg_seq = 1
+            # 如果msg_id为空，代表这个消息任务是主动发送的，但由于群发和qq私信不能主动发送信息。只能“蹭”别的信息的msg_id。
+            # 检查上一条消息ID是否在有效期内，如果在有效期内，则使用上一条消息ID
+            elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
+                if last_group_msg_seq >= 5:
+                    qq_bot_instance._blocking_group_queue.append((content, group_openid, msg_id, group, is_image))
+                    logger.debug(f"msg_seq已达到上限(5)，添加到阻塞消息队列：{content}")
+                    return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里有新消息才能激活发送。"
+                msg_id = last_group_msg_id
+                last_group_msg_seq += 1
+            # 如果上一条消息ID没有（机器人启动之后第一次的主动发信息）或者上一条消息ID已过期，那么把这个消息队列任务添加到阻塞消息队列中
+            else:
+                qq_bot_instance._blocking_group_queue.append((content, group_openid, msg_id, group, is_image))
+                logger.debug(f"添加到阻塞消息队列：{content}")
+                return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
+        
 
             try:
                 params = {
                     "group_openid": group_openid,
+                    "msg_id": str(last_group_msg_id),
                     "msg_seq": last_group_msg_seq
                 }
-                if msg_id is not None:
-                    params["msg_id"] = str(last_group_msg_id)
                 if is_image is True:
                     uploadMedia = await self.api.post_group_file(
                         group_openid=group_openid,
@@ -345,7 +368,7 @@ class QQBot(botpy.Client):
         # 向消息表中添加该消息
         message_obj.id = add_message(message_obj)
         # DEBUG
-        print(str(message_obj))
+        logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
         message_handler.handle_message(message_obj)
 
@@ -436,9 +459,23 @@ class QQBot(botpy.Client):
         # 向消息表中添加该消息
         message_obj.id = add_message(message_obj)
         # DEBUG
-        print(str(message_obj))
+        logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
         message_handler.handle_message(message_obj)
+
+        # 处理阻塞队列中的消息
+        if hasattr(self, '_blocking_group_queue') and self._blocking_group_queue:
+            logger.info(f"收到新消息，尝试处理阻塞队列中的消息，当前队列长度：{len(self._blocking_group_queue)}")
+            logger.debug(f"阻塞队列:{self._blocking_group_queue}")
+            # 最多处理5条消息（因为一个msg_id最多只能回复5次）
+            messages_to_process = min(5, len(self._blocking_group_queue))
+            logger.debug(f"本次将处理 {messages_to_process} 条阻塞消息")
+    
+            # 将部分阻塞队列消息添加到正常队列
+            for i in range(messages_to_process):
+                blocked_msg = self._blocking_group_queue.pop(0)  # 从队列头部取出消息
+                self._group_at_message_queue.append(blocked_msg)
+            logger.debug(f"处理后阻塞队列剩余 {len(self._blocking_group_queue)} 条消息")
 
     async def on_c2c_message_create(self, message: C2CMessage):
         """
@@ -531,7 +568,7 @@ class QQBot(botpy.Client):
         # 向消息表中添加该消息
         message_obj.id = add_message(message_obj)
         # DEBUG
-        print(str(message_obj))
+        logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
         message_handler.handle_message(message_obj)
 def add_group(group: Group) -> None:
