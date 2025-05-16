@@ -59,6 +59,8 @@ class QQBot(botpy.Client):
         # 启动消息处理任务
         import asyncio
         self._process_message_task = asyncio.create_task(self._process_message_queue())
+        # 启动阻塞队列定期检查任务
+        self._check_blocking_queue_task = asyncio.create_task(self._check_blocking_queues())
         notifier.notify_logged_in()
 
     async def _process_message_queue(self):
@@ -271,7 +273,30 @@ class QQBot(botpy.Client):
                 # 短暂暂停避免消息发送过快
                 await asyncio.sleep(0.1)
 
+    async def _check_blocking_queues(self):
+        """定期检查阻塞队列，尝试处理其中的消息"""
+        import asyncio
     
+        # 每隔多少秒检查一次阻塞队列
+        CHECK_INTERVAL = 60  # 1分钟检查一次
+    
+        while True:
+            # 等待指定时间
+            await asyncio.sleep(CHECK_INTERVAL)
+    
+            # 检查群聊阻塞队列
+            if hasattr(self, '_blocking_group_queue') and self._blocking_group_queue:
+                blocked_count = len(self._blocking_group_queue)
+                logger.warning(f"定期检查：群聊阻塞队列中有 {blocked_count} 条消息待处理")
+                logger.debug(f"qq群聊阻塞队列（_blocking_group_queue）：{self._blocking_group_queue}")
+    
+    
+            # 检查私聊阻塞队列
+            if hasattr(self, '_blocking_c2c_queue') and self._blocking_c2c_queue:
+                blocked_count = len(self._blocking_c2c_queue)
+                logger.warning(f"定期检查：私聊阻塞队列中有 {blocked_count} 条消息待处理")
+                logger.debug(f"qq私聊阻塞队列（_blocking_c2c_queue）：{self._blocking_c2c_queue}")
+                
     async def on_direct_message_create(self, message: DirectMessage):
         """
         当收到qq频道私信消息时
