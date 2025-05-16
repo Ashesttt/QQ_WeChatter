@@ -57,8 +57,7 @@ def main():
     db.create_tables()
 
     # 加载游戏
-    if config.get("features", {}).get("enable_games", False):
-        load_games()
+    load_games()
 
     print_wechatter_art_text()
 
