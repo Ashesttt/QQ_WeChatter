@@ -138,14 +138,14 @@ class QQBot(botpy.Client):
             elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
                 if last_group_msg_seq >= 5:
                     qq_bot_instance._blocking_group_queue.append((content, group_openid, msg_id, group, is_image))
-                    logger.debug(f"msg_seq已达到上限(5)，添加到阻塞消息队列：{content}")
+                    logger.info(f"msg_seq已达到上限(5)，添加到阻塞消息队列(_blocking_group_queue)，信息是：{content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里有新消息才能激活发送。"
                 msg_id = last_group_msg_id
                 last_group_msg_seq += 1
             # 如果上一条消息ID没有（机器人启动之后第一次的主动发信息）或者上一条消息ID已过期，那么把这个消息队列任务添加到阻塞消息队列中
             else:
                 qq_bot_instance._blocking_group_queue.append((content, group_openid, msg_id, group, is_image))
-                logger.debug(f"添加到阻塞消息队列：{content}")
+                logger.info(f"QQ消息已加入阻塞消息队列(_blocking_group_queue)，信息是：{content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
         
 
