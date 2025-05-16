@@ -12,8 +12,6 @@ def handle_push(data: dict):
         f"Push event on {payload.ref} in repository {payload.repository.full_name}."
     )
     branch_url = payload.repository.html_url + "/tree/" + payload.ref.split("/")[-1]
-    
-    safe_branch_url = branch_url.replace("github.com", "git-hub.com")
     # 用 h5 的 a 标签，用于在微信中打开（经测试微信会吞掉 href 里的链接），下面方法失效
     # branch_url = '<a href=" https://github.com/Cassius0924 ">查看详情</a>'
     message = (
@@ -26,6 +24,6 @@ def handle_push(data: dict):
     if len(payload.commits) != 0:
         # 最后一个commit的message
         message += f"📃 提交信息：{payload.commits.pop().message}\n"
-    message += f"🔗 查看详情：{safe_branch_url}"
+    message += f"🔗 查看详情：{branch_url}"
 
     sender.mass_send_msg_to_github_webhook_receivers(message)
