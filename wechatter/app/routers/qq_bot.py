@@ -140,7 +140,7 @@ class QQBot(botpy.Client):
             elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
                 if last_group_msg_seq >= 5:
                     current_time = get_current_datetime2()
-                    modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，加入队列时间：\n⌚️ {current_time}"
+                    modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                     qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
                     logger.warning(f"msg_seq已达到上限(5)，添加到阻塞消息队列(_blocking_group_queue)，信息是：{modified_content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里有新消息才能激活发送。"
@@ -149,7 +149,7 @@ class QQBot(botpy.Client):
             # 如果上一条消息ID没有（机器人启动之后第一次的主动发信息）或者上一条消息ID已过期，那么把这个消息队列任务添加到阻塞消息队列中
             else:
                 current_time = get_current_datetime2()
-                modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，加入队列时间：\n⌚️ {current_time}"
+                modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                 qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
                 logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_group_queue)，信息是：{modified_content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
@@ -213,7 +213,7 @@ class QQBot(botpy.Client):
             elif last_c2c_msg_id and (_current_time - last_c2c_msg_time < MSG_ID_EXPIRY):
                 if last_c2c_msg_seq >= 5:
                     current_time = get_current_datetime2()
-                    modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，加入队列时间：\n⌚️ {current_time}"
+                    modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                     qq_bot_instance._blocking_c2c_queue.append((modified_content, user_openid, msg_id, is_image))
                     logger.warning(f"msg_seq已达到上限(5)，添加到阻塞消息队列(_blocking_c2c_queue)，信息是：{modified_content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要有新消息才能激活发送。"
@@ -222,7 +222,7 @@ class QQBot(botpy.Client):
             # 如果上一条消息ID没有或已过期，将消息添加到阻塞队列
             else:
                 current_time = get_current_datetime2()
-                modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，加入队列时间：\n⌚️ {current_time}"
+                modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                 qq_bot_instance._blocking_c2c_queue.append((modified_content, user_openid, msg_id, is_image))
                 logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_c2c_queue)，信息是：{modified_content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要私聊机器人，即可发送。"
