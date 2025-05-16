@@ -503,17 +503,17 @@ class QQBot(botpy.Client):
 
         # 处理阻塞队列中的消息
         if hasattr(self, '_blocking_group_queue') and self._blocking_group_queue:
-            logger.warning(f"收到新消息，尝试处理阻塞队列中的消息，当前队列长度：{len(self._blocking_group_queue)}")
-            logger.warning(f"阻塞队列:{self._blocking_group_queue}")
+            logger.warning(f"收到新消息，尝试处理qq群阻塞消息队列(_blocking_group_queue)中的消息，当前队列长度：{len(self._blocking_group_queue)}")
+            logger.debug(f"qq群阻塞消息队列(_blocking_group_queue):{self._blocking_group_queue}")
             # 最多处理5条消息（因为一个msg_id最多只能回复5次）
             messages_to_process = min(5, len(self._blocking_group_queue))
-            logger.warning(f"本次将处理 {messages_to_process} 条阻塞消息")
+            logger.warning(f"本次将处理 {messages_to_process} 条qq群阻塞消息队列")
     
             # 将部分阻塞队列消息添加到正常队列
             for i in range(messages_to_process):
                 blocked_msg = self._blocking_group_queue.pop(0)  # 从队列头部取出消息
                 self._group_at_message_queue.append(blocked_msg)
-            logger.warning(f"处理后阻塞队列剩余 {len(self._blocking_group_queue)} 条消息")
+            logger.warning(f"处理后qq群阻塞消息队列剩余 {len(self._blocking_group_queue)} 条消息")
 
     async def on_c2c_message_create(self, message: C2CMessage):
         """
@@ -609,6 +609,21 @@ class QQBot(botpy.Client):
         logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
         message_handler.handle_message(message_obj)
+
+        # 处理阻塞队列中的消息
+        if hasattr(self, '_blocking_c2c_queue') and self._blocking_c2c_queue:
+            logger.warning(f"收到新消息，尝试处理qq私聊阻塞消息队列(_blocking_c2c_queue)中的消息，当前队列长度：{len(self._blocking_c2c_queue)}")
+            logger.debug(f"qq私聊阻塞消息队列(_blocking_c2c_queue):{self._blocking_c2c_queue}")
+            # 最多处理5条消息（因为一个msg_id最多只能回复5次）
+            messages_to_process = min(5, len(self._blocking_c2c_queue))
+            logger.warning(f"本次将处理 {messages_to_process} 条qq私聊阻塞消息")
+
+            # 将部分阻塞队列消息添加到正常队列
+            for i in range(messages_to_process):
+                blocked_msg = self._blocking_c2c_queue.pop(0)  # 从队列头部取出消息
+                self._c2c_message_queue.append(blocked_msg)
+            logger.warning(f"处理后qq私聊阻塞消息队列剩余 {len(self._blocking_c2c_queue)} 条消息")
+
 def add_group(group: Group) -> None:
     """
     判断群组表中是否有该群组，若没有，则添加该群组
