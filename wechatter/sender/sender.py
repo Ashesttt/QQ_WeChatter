@@ -14,7 +14,6 @@ from wechatter.models import Person
 from wechatter.models.wechat import QuotedResponse, SendTo, Group
 from wechatter.sender.quotable import make_quotable
 from wechatter.utils import join_urls, post_request
-from wechatter.app.routers.qq_bot import qq_bot_instance
 
 
 # 对retry装饰器重新包装，增加日志输出
