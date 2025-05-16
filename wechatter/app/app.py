@@ -10,6 +10,8 @@ from wechatter.scheduler import Scheduler
 app = FastAPI()
 
 app.include_router(routers.wechat_router)
+app.include_router(routers.upload_router)  # 添加图片上传路由
+
 
 if config["github_webhook_enabled"]:
     app.include_router(routers.github_router)

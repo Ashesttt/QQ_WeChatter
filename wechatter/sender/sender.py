@@ -8,6 +8,7 @@ import requests
 import tenacity
 from loguru import logger
 
+from wechatter.app.routers.upload import upload_image
 from wechatter.config import config
 from wechatter.models import Person
 from wechatter.models.wechat import QuotedResponse, SendTo, Group
@@ -187,7 +188,10 @@ def _send_msg1(
     is_image = False
     if type == "localfile":
         is_image = True
-        image_path = message
+        # 已经是绝对路径
+        abs_image_path = message
+        url_image_path = upload_image(abs_image_path)
+        message = url_image_path
         
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
