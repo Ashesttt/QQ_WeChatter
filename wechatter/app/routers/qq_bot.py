@@ -82,7 +82,7 @@ class QQBot(botpy.Client):
                     params["msg_id"] = msg_id
                 # 当要发送的信息是图片的时候，content就是图片路径
                 if is_image is True:
-                    params["file_image"] = content
+                    params["image"] = content
                     params["content"] = ""
                 post_dms = await self.api.post_dms(**params)
                 # # 避免磁盘空间浪费，但没必要
@@ -138,7 +138,7 @@ class QQBot(botpy.Client):
                         file_type=1, # 文件类型要对应上，具体支持的类型见方法说明
                         url=content # 文件Url
                     )
-                    print(uploadMedia)                    
+                    logger.debug(f"这是图片上传结果uploadMedia：{uploadMedia}")
                     params["media"] = uploadMedia
                     params["msg_type"] = 7
                 else:

@@ -380,6 +380,7 @@ def mass_send_msg(
                 
                 # 由于是主动发送，所以没有msg_id
                 msg_id = None
+                is_image = False
                 if type == "localfile":
                     is_image = True
                 # 添加到发送队列

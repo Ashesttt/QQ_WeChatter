@@ -1,4 +1,5 @@
 import os
+import requests
 import uuid
 import shutil
 from fastapi import APIRouter, HTTPException, Request
@@ -39,9 +40,10 @@ def upload_image(image_path: str):
         
         # 获取端口号
         port = config["wechatter_port"]
+        ip = requests.get('https://checkip.amazonaws.com').text.strip()
         
         # 返回可访问URL
-        url = f"http://localhost:{port}/api/image/{file_name}"
+        url = f"http://ip:{port}/api/image/{file_name}"
         return url
     
     except Exception as e:
