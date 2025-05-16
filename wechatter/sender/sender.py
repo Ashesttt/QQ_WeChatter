@@ -373,6 +373,7 @@ def mass_send_msg(
         # 通过name获取guild_id(就是person的id)
         from wechatter.database.tables.person import Person as DbPerson
         from wechatter.database import make_db_session
+        from wechatter.app.routers.qq_bot import qq_bot_instance
         if not is_group:
             if is_qq_c2c_list:
                 user_openid = name
@@ -384,7 +385,6 @@ def mass_send_msg(
                     if person and person.id is not None:
                         guild_id = str(person.id)                  
                         # 添加到发送队列
-                        # from wechatter.app.routers.qq_bot import qq_bot_instance
                         qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
                         logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
         else:
