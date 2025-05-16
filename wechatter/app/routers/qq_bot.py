@@ -659,7 +659,7 @@ def add_message(message: Message) -> int:
 
 
 # 创建一个全局变量存储QQBot实例
-# qq_bot_instance = None
+qq_bot_instance = None
 def create_qq_bot():
     """创建QQ机器人实例"""
     global qq_bot_instance    
