@@ -80,6 +80,7 @@ class QQBot(botpy.Client):
                 }
                 if msg_id is not None:
                     params["msg_id"] = msg_id
+                # 当要发送的信息是图片的时候，content就是图片路径
                 if is_image is True:
                     params["file_image"] = content
                     params["content"] = ""
@@ -112,7 +113,7 @@ class QQBot(botpy.Client):
             nonlocal last_group_msg_id, last_group_msg_seq
             post_group_message = ""
             # 实现群聊@消息发送逻辑
-            content, group_openid, msg_id, group = msg_data
+            content, group_openid, msg_id, group, is_image = msg_data
             """
                 由于post_group_message和post_c2c_message方法如果想要多次回复一条信息，需要使用msg_seq（相同的 msg_id + msg_seq 重复发送会失败），
                 因此，先记录下这次的msg_id为last_group_msg_id，然后下次消息队列又来消息时，如果msg_id与last_group_msg_id相同，
@@ -125,12 +126,26 @@ class QQBot(botpy.Client):
                 last_group_msg_seq = 1
 
             try:
-                post_group_message = await self.api.post_group_message(
-                    content=content,
-                    group_openid=group_openid,
-                    msg_id=str(last_group_msg_id),
-                    msg_seq=last_group_msg_seq,
-                )
+                params = {
+                    "group_openid": group_openid,
+                    "msg_seq": last_group_msg_seq
+                }
+                if msg_id is not None:
+                    params["msg_id"] = str(last_group_msg_id)
+                if is_image is True:
+                    uploadMedia = await self.api.post_group_file(
+                        group_openid=group_openid,
+                        file_type=1, # 文件类型要对应上，具体支持的类型见方法说明
+                        url=content # 文件Url
+                    )
+                    print(uploadMedia)                    
+                    params["media"] = uploadMedia
+                    params["msg_type"] = 7
+                else:
+                    params["content"] = content
+                    
+                    
+                post_group_message = await self.api.post_group_message(**params)
                 logger.debug(f"这是post_group_message：\n{post_group_message}")
                 logger.info(f"QQ群聊@消息发送成功")
             except Exception as e:
