@@ -14,6 +14,7 @@ from wechatter.models import Person
 from wechatter.models.wechat import QuotedResponse, SendTo, Group
 from wechatter.sender.quotable import make_quotable
 from wechatter.utils import join_urls, post_request
+from wechatter.app.routers.qq_bot import qq_bot_instance
 
 
 # 对retry装饰器重新包装，增加日志输出
@@ -344,7 +345,7 @@ def mass_send_msg(
     is_group: bool = False,
     type: str = "text",
     quoted_response: QuotedResponse = None,
-    is_admin_qq_c2c_list: bool = False,
+    is_qq_c2c_list: bool = False,
 ):
     """
     群发消息，给多个人发送一条消息
@@ -374,7 +375,7 @@ def mass_send_msg(
         from wechatter.database.tables.person import Person as DbPerson
         from wechatter.database import make_db_session
         if not is_group:
-            if is_admin_qq_c2c_list:
+            if is_qq_c2c_list:
                 user_openid = name
                 qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id, is_image))
                 logger.info(f"QQ消息已加入qq私信队列(_c2c_message_queue)，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
@@ -476,7 +477,7 @@ def mass_send_msg_to_admins(
     
     if admin_qq_c2c_list:
         logger.info(f"发送qq私信消息给管理员：{admin_qq_c2c_list}")
-        mass_send_msg(admin_qq_c2c_list, message, type=type, is_admin_qq_c2c_list=True)
+        mass_send_msg(admin_qq_c2c_list, message, type=type, is_qq_c2c_list=True)
 
     admin_group_list = config.get("admin_group_list")
     if admin_group_list:
@@ -497,6 +498,7 @@ def mass_send_msg_to_github_webhook_receivers(
         message = make_quotable(message=message, quoted_response=quoted_response)
 
     person_list = config.get("github_webhook_receive_person_list")
+    person_qq_c2c_list = config.get("github_webhook_receive_person_qq_c2c_list")
     group_list = config.get("github_webhook_receive_group_list")
     if person_list:
         logger.info(f"发送消息给 GitHub Webhook 接收者：{person_list}")
@@ -505,6 +507,15 @@ def mass_send_msg_to_github_webhook_receivers(
             message,
             is_group=False,
             type=type,
+        )
+    if person_qq_c2c_list:
+        logger.info(f"发送消息给 GitHub Webhook 接收者：{person_qq_c2c_list}")
+        mass_send_msg(
+            person_qq_c2c_list,
+            message,
+            is_group=False,
+            type=type,
+            is_qq_c2c_list=True,
         )
     if group_list:
         logger.info(f"发送消息给 GitHub Webhook 接收者：{group_list}")
