@@ -385,7 +385,7 @@ def mass_send_msg(
                     # 添加到发送队列
                     from wechatter.app.routers.qq_bot import qq_bot_instance
                     qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
-                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
+                    logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
         else:
             # 是群，因此name就是群group_openid
             group_openid = name
@@ -397,7 +397,7 @@ def mass_send_msg(
             )
             # 添加到发送队列
             qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group, is_image))
-            logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
+            logger.info(f"QQ消息已加入qq群消息队列(_group_at_message_queue)，将发送给：{name}，信息是：{message}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
             
                 
         
