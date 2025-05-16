@@ -130,8 +130,8 @@ class QQBot(botpy.Client):
             """
             # 获取当前时间戳
             _current_time = get_current_timestamp()
-            # 如果收到新消息(msg_id不为None)，更新最后消息ID和时间
-            if msg_id is not None:
+            # 如果收到新消息(msg_id不为None)，而且msg_id与上次的msg_id不同，则发送消息（以防有的消息用的到的msg_id相同），更新最后消息ID和时间
+            if msg_id is not None and msg_id != last_group_msg_id:
                 last_group_msg_id = msg_id
                 last_group_msg_time = _current_time
                 last_group_msg_seq = 1
