@@ -40,6 +40,7 @@ def upload_image(image_path: str):
         
         # 获取端口号
         port = config["wechatter_port"]
+        # 获取公网ip,否则就得用图床了
         ip = requests.get('https://checkip.amazonaws.com').text.strip()
         
         # 返回可访问URL

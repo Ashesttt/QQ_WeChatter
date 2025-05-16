@@ -171,7 +171,7 @@ class QQBot(botpy.Client):
             nonlocal last_c2c_msg_id, last_c2c_msg_seq
             post_c2c_message = ""
             # 实现私聊消息发送逻辑
-            content, user_openid, msg_id = msg_data
+            content, user_openid, msg_id, is_image = msg_data
             if msg_id == last_c2c_msg_id:
                 last_c2c_msg_seq += 1
             else:
@@ -179,12 +179,26 @@ class QQBot(botpy.Client):
                 last_c2c_msg_seq = 1
             
             try:
-                post_c2c_message = await self.api.post_c2c_message(
-                    content=content,
-                    openid=user_openid,
-                    msg_id=last_c2c_msg_id,
-                    msg_seq=str(last_c2c_msg_seq),
-                )
+                params = {
+                    "openid": user_openid,
+                    "msg_seq": last_c2c_msg_seq
+                }
+                if msg_id is not None:
+                    params["msg_id"] = str(last_c2c_msg_id)
+                if is_image is True:
+                    uploadMedia = await self.api.post_c2c_file(
+                        openid=user_openid,
+                        file_type=1, # 文件类型要对应上，具体支持的类型见方法说明
+                        url=content # 文件Url
+                    )
+                    logger.debug(f"这是图片上传结果uploadMedia：{uploadMedia}")
+                    params["media"] = uploadMedia
+                    params["msg_type"] = 7
+                else:
+                    params["content"] = content
+
+
+                post_c2c_message = await self.api.post_c2c_message(**params)
                 logger.debug(f"这是post_c2c_message：\n{post_c2c_message}")
                 logger.info(f"QQ私聊消息发送成功")
             except Exception as e:

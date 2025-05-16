@@ -218,8 +218,8 @@ def _send_msg1(
                 elif person.user_openid is not None:
                     user_openid = person.user_openid
                     # 添加到发送队列
-                    qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id))
-                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}。")
+                    qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id, is_image))
+                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
                 
             if group:
                 print("这是group:")
@@ -355,11 +355,13 @@ def mass_send_msg(
     :param type: 消息类型（text、fileUrl、localfile）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
+    is_image = False
     if type == "localfile":
-        # 由于本地文件不支持群发，使用循环单发
-        for name in name_list:
-            _send_localfile_msg1(name, message, is_group)
-        return
+        is_image = True
+        # 已经是绝对路径
+        abs_image_path = message
+        url_image_path = upload_image(abs_image_path)
+        message = url_image_path
 
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
@@ -380,9 +382,6 @@ def mass_send_msg(
                 
                 # 由于是主动发送，所以没有msg_id
                 msg_id = None
-                is_image = False
-                if type == "localfile":
-                    is_image = True
                 # 添加到发送队列
                 from wechatter.app.routers.qq_bot import qq_bot_instance
                 qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
