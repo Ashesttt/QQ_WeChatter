@@ -344,6 +344,7 @@ def mass_send_msg(
     is_group: bool = False,
     type: str = "text",
     quoted_response: QuotedResponse = None,
+    is_admin_qq_c2c_list: bool = False,
 ):
     """
     群发消息，给多个人发送一条消息
@@ -373,19 +374,19 @@ def mass_send_msg(
         from wechatter.database.tables.person import Person as DbPerson
         from wechatter.database import make_db_session
         if not is_group:
-            with make_db_session() as session:
-                person = session.query(DbPerson).filter(DbPerson.name == name).first()
-                if person and person.id is not None:
-                    guild_id = str(person.id)
-                    # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
-                    #  能否在qq_bot.py的process_group_at_message方法中加入
-                    #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
-                    #                 msg_id == last_group_msg_id
-                    
-                    # 添加到发送队列
-                    from wechatter.app.routers.qq_bot import qq_bot_instance
-                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
-                    logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
+            if is_admin_qq_c2c_list:
+                user_openid = name
+                qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id, is_image))
+                logger.info(f"QQ消息已加入qq私信队列(_c2c_message_queue)，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
+            else:
+                with make_db_session() as session:
+                    person = session.query(DbPerson).filter(DbPerson.name == name).first()
+                    if person and person.id is not None:
+                        guild_id = str(person.id)                  
+                        # 添加到发送队列
+                        # from wechatter.app.routers.qq_bot import qq_bot_instance
+                        qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
+                        logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
         else:
             # 是群，因此name就是群group_openid
             group_openid = name
@@ -468,9 +469,14 @@ def mass_send_msg_to_admins(
         message = make_quotable(message=message, quoted_response=quoted_response)
 
     admin_list = config.get("admin_list")
+    admin_qq_c2c_list = config.get("admin_qq_c2c_list")
     if admin_list:
         logger.info(f"发送消息给管理员：{admin_list}")
         mass_send_msg(admin_list, message, type=type)
+    
+    if admin_qq_c2c_list:
+        logger.info(f"发送qq私信消息给管理员：{admin_qq_c2c_list}")
+        mass_send_msg(admin_qq_c2c_list, message, type=type, is_admin_qq_c2c_list=True)
 
     admin_group_list = config.get("admin_group_list")
     if admin_group_list:
