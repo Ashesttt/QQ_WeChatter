@@ -353,6 +353,7 @@ def mass_send_msg(
     :param type: 消息类型（text、fileUrl、localfile）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
+    global qq_bot_instance  # 声明引用全局变量
     # 由于是主动发送，所以没有msg_id
     msg_id = None
     is_image = False
