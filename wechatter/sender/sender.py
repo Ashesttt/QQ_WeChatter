@@ -196,12 +196,6 @@ def _send_msg1(
         # 成功把url变成qrcode 注意这里的message已经变成了qrcode的路径
         # 注意type要用"localfile"
         type="localfile"
-    else:
-        message = desensitize_message(message)
-        
-    if quoted_response:
-        message = make_quotable(message=message, quoted_response=quoted_response)
-
         
     is_image = False
     if type == "localfile":
@@ -210,6 +204,13 @@ def _send_msg1(
         abs_image_path = message
         url_image_path = upload_image(abs_image_path)
         message = url_image_path
+    else:
+        message = desensitize_message(message)
+        
+    if quoted_response:
+        message = make_quotable(message=message, quoted_response=quoted_response)
+
+        
     
     # 如果是QQ平台
     if platform == "qq":
@@ -382,18 +383,28 @@ def mass_send_msg(
     #     # 不是引用消息，就进行url脱敏处理
     #     # 对消息进行url脱敏处理
     #     message = desensitize_message(message)
-    if quoted_response:
-        # 如果内容是URL，转二维码
-        if message.startswith("http://") or message.startswith("https://"):
-            qrcode_path = get_qrcode_saved_path(message)
-            # 成功把url变成qrcode 注意这里的message已经变成了qrcode的路径
-            # 注意type要用"localfile"
-            type="localfile"
-            return
-        else:
-            message = make_quotable(message=message, quoted_response=quoted_response)
+    # 一般只要是引用的消息，message都是url，但是qq机器人需要配置https才可以发送url，
+    # 因此如果是引用消息，就可以把它变成二维码，这样就很好的解决问题
+
+    # 如果内容是URL，转二维码
+    if message.startswith("http://") or message.startswith("https://"):
+        message = get_qrcode_saved_path(message)
+        # 成功把url变成qrcode 注意这里的message已经变成了qrcode的路径
+        # 注意type要用"localfile"
+        type="localfile"
+
+    is_image = False
+    if type == "localfile":
+        is_image = True
+        # 已经是绝对路径
+        abs_image_path = message
+        url_image_path = upload_image(abs_image_path)
+        message = url_image_path
     else:
         message = desensitize_message(message)
+
+    if quoted_response:
+        message = make_quotable(message=message, quoted_response=quoted_response)
         
     # 由于是主动发送，所以没有msg_id
     msg_id = None
