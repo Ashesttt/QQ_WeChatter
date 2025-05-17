@@ -13,7 +13,7 @@ from wechatter.utils import get_request, get_request_json
 
 @command(
     command="word",
-    keys=["word", "单词"],
+    keys=["word", "单词", "translate", "翻译"],
     desc="翻译单词或短语。",
 )
 def word_command_handler(to: Union[str, SendTo], message: str = "") -> None:
@@ -67,6 +67,8 @@ MODEL_DICT = {
 # 获取翻译字符串
 @word_command_handler.mainfunc
 def get_reverso_context_tran_str(content: str) -> str:
+    if content == "":
+        return "翻译失败，请输入要翻译的单词或短语"
     from_lang = _detect_lang(content)
     to_lang = "chinese"
 

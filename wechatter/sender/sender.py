@@ -8,6 +8,7 @@ import requests
 import tenacity
 from loguru import logger
 
+from wechatter.app.routers.qq_bot import desensitize_message
 from wechatter.app.routers.upload import upload_image
 from wechatter.config import config
 from wechatter.models import Person
@@ -195,7 +196,9 @@ def _send_msg1(
         
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
-
+        
+    # 对消息进行脱敏处理
+    message = desensitize_message(message)
     
     # 如果是QQ平台
     if platform == "qq":
@@ -367,6 +370,9 @@ def mass_send_msg(
 
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
+
+    # 对消息进行脱敏处理
+    message = desensitize_message(message)
 
     for name in name_list:
         # 只有qq频道才可以主动发送信息

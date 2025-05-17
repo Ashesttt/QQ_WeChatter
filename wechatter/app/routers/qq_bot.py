@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import botpy
 from botpy.message import DirectMessage, GroupMessage, C2CMessage
@@ -102,7 +103,7 @@ class QQBot(botpy.Client):
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 # 加入消息队列说发送失败
-                failed_content = f"\n❗️ 错误：消息发送失败：{str(e)}"
+                failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
                 # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
                 self._direct_message_queue.append((failed_content, guild_id, msg_id, is_image))
                 
@@ -184,7 +185,7 @@ class QQBot(botpy.Client):
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
                 # 加入消息队列说发送失败
-                failed_content = f"\n❗️ 错误：消息发送失败：{str(e)}"
+                failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
                 # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
                 self._group_at_message_queue.append((failed_content, group_openid, msg_id, group, is_image))
 
@@ -259,7 +260,7 @@ class QQBot(botpy.Client):
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
                 # 加入消息队列说发送失败
-                failed_content = f"\n❗️ 错误：消息发送失败：{str(e)}"
+                failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
                 # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
                 self._c2c_message_queue.append((failed_content, user_openid, msg_id, is_image))
         
@@ -728,3 +729,16 @@ def create_qq_bot():
     client = QQBot(intents=intents)
     qq_bot_instance = client    
     return client
+
+def desensitize_message(content):
+    """
+    对消息进行脱敏处理
+    """
+    # 匹配所有URL
+    url_pattern = r'https?://[^\s]+'
+    content = re.sub(url_pattern, '[链接已隐藏]', content)
+    # 匹配所有域名（如 example.com、abc.xyz、mail.example.co.uk）
+    # 只要有“点”且后面是2-10位字母（常见顶级域名长度）
+    domain_pattern = r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}\b'
+    content = re.sub(domain_pattern, '[域名已隐藏]', content)
+    return content

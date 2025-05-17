@@ -68,7 +68,7 @@ def get_pai_post_str() -> Tuple[str, str]:
 def _parse_pai_post_response(response: requests.Response) -> List:
     soup = BeautifulSoup(response.text, "html.parser")
     pai_post_list = []
-    articles = soup.select("div.pai_abstract")
+    articles = soup.select("div.card_content")
     if not articles:
         logger.error("少数派早报列表为空")
         raise Bs4ParsingError("少数派早报列表为空")
