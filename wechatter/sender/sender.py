@@ -8,6 +8,7 @@ import requests
 import tenacity
 from loguru import logger
 
+from wechatter.app.routers.upload import upload_image
 from wechatter.config import config
 from wechatter.models import Person
 from wechatter.models.wechat import QuotedResponse, SendTo, Group
@@ -184,9 +185,14 @@ def _send_msg1(
     :param type: 消息类型（text、fileUrl）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
+    is_image = False
     if type == "localfile":
-        return _send_localfile_msg1(name, message, is_group)
-
+        is_image = True
+        # 已经是绝对路径
+        abs_image_path = message
+        url_image_path = upload_image(abs_image_path)
+        message = url_image_path
+        
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
 
@@ -198,30 +204,29 @@ def _send_msg1(
         if qq_bot_instance:
             # 如果要发送给个人就有person
             if person:
-                print("这是person:")
-                print(person)
+                logger.debug(f"这是person:{person}")
                 msg_id = person.msg_id
                 # 如果person有guild_id，说明是在qq频道私信
                 if person.guild_id is not None:
                     guild_id = person.guild_id
-                    # 添加到发送队列
-                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
-                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
+                        # 添加到发送队列
+                    qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
+                    logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
                     
                 # 如果person有user_openid，说明是在qq私信
                 elif person.user_openid is not None:
                     user_openid = person.user_openid
                     # 添加到发送队列
-                    qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id))
-                    logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}。")
+                    qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id, is_image))
+                    logger.info(f"QQ消息已加入qq私信队列(_c2c_message_queue)，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
                 
             if group:
-                print("这是group:")
-                print(group)
+                logger.debug(f"这是group:{group}")
                 group_openid = group.id
                 msg_id = group.msg_id
                 # 添加到发送队列
-                qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group))
+                qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group, is_image))
+                logger.info(f"QQ消息已加入qq群消息队列(_group_at_message_queue)，信息是：{message}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                 
     return
 
@@ -339,6 +344,7 @@ def mass_send_msg(
     is_group: bool = False,
     type: str = "text",
     quoted_response: QuotedResponse = None,
+    is_qq_c2c_list: bool = False,
 ):
     """
     群发消息，给多个人发送一条消息
@@ -348,11 +354,16 @@ def mass_send_msg(
     :param type: 消息类型（text、fileUrl、localfile）
     :param quoted_response: 被引用后的回复消息（默认值为 None）
     """
+    global qq_bot_instance  # 声明引用全局变量
+    # 由于是主动发送，所以没有msg_id
+    msg_id = None
+    is_image = False
     if type == "localfile":
-        # 由于本地文件不支持群发，使用循环单发
-        for name in name_list:
-            _send_localfile_msg1(name, message, is_group)
-        return
+        is_image = True
+        # 已经是绝对路径
+        abs_image_path = message
+        url_image_path = upload_image(abs_image_path)
+        message = url_image_path
 
     if quoted_response:
         message = make_quotable(message=message, quoted_response=quoted_response)
@@ -362,22 +373,33 @@ def mass_send_msg(
         # 通过name获取guild_id(就是person的id)
         from wechatter.database.tables.person import Person as DbPerson
         from wechatter.database import make_db_session
-        with make_db_session() as session:
-            person = session.query(DbPerson).filter(DbPerson.name == name).first()
-            if person and person.id is not None:
-                guild_id = str(person.id)
-                # TODO:尝试让qq群和qq私聊也可以"主动"发送信息（实际上是蹭别的别的信息的msg_id）：
-                #  能否在qq_bot.py的process_group_at_message方法中加入
-                #              if msg_id is None and last_group_msg_id is not None: 如果last_group_msg_id不为空，且msg_id为空，则
-                #                 msg_id == last_group_msg_id
+        from wechatter.app.routers.qq_bot import qq_bot_instance
+        if not is_group:
+            if is_qq_c2c_list:
+                user_openid = name
+                qq_bot_instance._c2c_message_queue.append((message, user_openid, msg_id, is_image))
+                logger.info(f"QQ消息已加入qq私信队列(_c2c_message_queue)，信息是：{message}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
+            else:
+                with make_db_session() as session:
+                    person = session.query(DbPerson).filter(DbPerson.name == name).first()
+                    if person and person.id is not None:
+                        guild_id = str(person.id)                  
+                        # 添加到发送队列
+                        qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id, is_image))
+                        logger.info(f"QQ消息已加入qq频道私信队列(_direct_message_queue)，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
+        else:
+            # 是群，因此name就是群group_openid
+            group_openid = name
+            group = Group(
+                id=group_openid,
+                name=group_openid,
+                member_list=[],
+            )
+            # 添加到发送队列
+            qq_bot_instance._group_at_message_queue.append((message, group_openid, msg_id, group, is_image))
+            logger.info(f"QQ消息已加入qq群消息队列(_group_at_message_queue)，信息是：{message}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
+            
                 
-                # 由于是主动发送，所以没有msg_id
-                msg_id = None
-                # 添加到发送队列
-                from wechatter.app.routers.qq_bot import qq_bot_instance
-                qq_bot_instance._direct_message_queue.append((message, guild_id, msg_id))
-                logger.info(f"QQ消息已加入队列，将发送给：{name}，信息是：{message}，guild_id：{guild_id}，msg_id：{msg_id}。")
-        
         
         # data = [
         #     {
@@ -447,9 +469,14 @@ def mass_send_msg_to_admins(
         message = make_quotable(message=message, quoted_response=quoted_response)
 
     admin_list = config.get("admin_list")
+    admin_qq_c2c_list = config.get("admin_qq_c2c_list")
     if admin_list:
         logger.info(f"发送消息给管理员：{admin_list}")
         mass_send_msg(admin_list, message, type=type)
+    
+    if admin_qq_c2c_list:
+        logger.info(f"发送qq私信消息给管理员：{admin_qq_c2c_list}")
+        mass_send_msg(admin_qq_c2c_list, message, type=type, is_qq_c2c_list=True)
 
     admin_group_list = config.get("admin_group_list")
     if admin_group_list:
@@ -470,6 +497,7 @@ def mass_send_msg_to_github_webhook_receivers(
         message = make_quotable(message=message, quoted_response=quoted_response)
 
     person_list = config.get("github_webhook_receive_person_list")
+    person_qq_c2c_list = config.get("github_webhook_receive_person_qq_c2c_list")
     group_list = config.get("github_webhook_receive_group_list")
     if person_list:
         logger.info(f"发送消息给 GitHub Webhook 接收者：{person_list}")
@@ -478,6 +506,15 @@ def mass_send_msg_to_github_webhook_receivers(
             message,
             is_group=False,
             type=type,
+        )
+    if person_qq_c2c_list:
+        logger.info(f"发送消息给 GitHub Webhook 接收者：{person_qq_c2c_list}")
+        mass_send_msg(
+            person_qq_c2c_list,
+            message,
+            is_group=False,
+            type=type,
+            is_qq_c2c_list=True,
         )
     if group_list:
         logger.info(f"发送消息给 GitHub Webhook 接收者：{group_list}")

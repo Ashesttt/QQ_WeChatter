@@ -26,9 +26,10 @@ def qrcode_command_handler(to: Union[str, SendTo], message: str = "") -> None:
         sender.send_msg(to, error_message)
     else:
         sender.send_msg(to, path, type="localfile")
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
+    # 由于qq机器人时异步执行的，会发生还没发送完成，文件就被删掉了，因此把os.remove(path)移至发送完成的后边
+    # finally:
+    #     if os.path.exists(path):
+    #         os.remove(path)
 
 
 @qrcode_command_handler.mainfunc
@@ -42,6 +43,12 @@ def get_qrcode_saved_path(data: str) -> str:
     path = get_abs_path(f"data/qrcodes/{datetime_str}.png")
     img = _generate_qrcode(data)
     _save_qrcode(img, path)
+    # 检查文件是否成功保存
+    if not os.path.exists(path):
+        logger.error(f"文件未成功保存到路径: {path}")
+    else:
+        logger.info(f"二维码已保存到: {path}")
+    
     return path
 
 
@@ -70,6 +77,7 @@ def _save_qrcode(img, path: str) -> None:
         raise PermissionError(f"保存 {path} 失败，权限不足")
     try:
         img.save(path)
+        logger.debug(f"二维码已保存到: {path}")
     except AttributeError:
         logger.error(f"保存 {path} 失败，二维码图像为空")
         raise AttributeError(f"保存 {path} 失败，二维码图像为空")

@@ -17,6 +17,6 @@ def handle_issue(data: dict):
         f"📚 仓库：{payload.repository.full_name}\n"
         f"📝 标题：{payload.issue.title}\n"
         f"🧑‍💻 创建者：{payload.issue.user.login}\n"
-        f"🔗 查看详情：{payload.issue.html_url}"
+        # f"🔗 查看详情：{payload.issue.html_url}"
     )
     sender.mass_send_msg_to_github_webhook_receivers(message)

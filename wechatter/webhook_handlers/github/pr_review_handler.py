@@ -17,6 +17,6 @@ def handle_pr_review(data: dict):
         f"📚 仓库：{payload.repository.full_name}\n"
         f"📝 标题：{payload.pull_request.title}\n"
         f"🧑‍💻 创建者：{payload.pull_request.user.login}\n"
-        f"🔗 查看详情：{payload.pull_request.html_url}"
+        # f"🔗 查看详情：{payload.pull_request.html_url}"
     )
     sender.mass_send_msg_to_github_webhook_receivers(message)

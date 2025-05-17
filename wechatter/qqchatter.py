@@ -51,13 +51,13 @@ def main():
     check_and_create_folder("data/qrcodes")
     check_and_create_folder("data/todos")
     check_and_create_folder("data/text_image")
+    check_and_create_folder("data/upload_image")
 
     # 初始化数据库
     db.create_tables()
 
     # 加载游戏
-    if config.get("features", {}).get("enable_games", False):
-        load_games()
+    load_games()
 
     print_wechatter_art_text()
 
