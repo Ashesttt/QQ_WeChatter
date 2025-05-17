@@ -101,6 +101,10 @@ class QQBot(botpy.Client):
                 logger.success(f"QQ频道私信发送成功，内容：{content}，guild_id: {guild_id}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
+                # 加入消息队列说发送失败
+                failed_content = f"❗️ 错误：消息发送失败：{str(e)}"
+                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
+                self._direct_message_queue.append((failed_content, guild_id, msg_id, is_image))
                 
             try:    
                 # 主动发送返回的post_dms:to_A:{'code': 304023, 'message': '消息提交安全审核成功', 'data': {'message_audit': {'audit_id': 'a542254e-7390-4ec0-81a9-9b03e5df41e5'}}, 'err_code': 40034120, 'trace_id': '490b134028f32983479ee42ccc7d1424'}
@@ -135,7 +139,7 @@ class QQBot(botpy.Client):
                 last_group_msg_id = msg_id
                 last_group_msg_time = _current_time
                 last_group_msg_seq = 1
-            # 如果msg_id为空，代表这个消息任务是主动发送的，但由于群发和qq私信不能主动发送信息。只能“蹭”别的信息的msg_id。
+            # 如果msg_id为空，代表这个消息任务是主动发送的，但由于群发和qq私信不能主动发送信息。只能"蹭"别的信息的msg_id。
             # 检查上一条消息ID是否在有效期内，如果在有效期内，则使用上一条消息ID
             elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
                 if last_group_msg_seq >= 5:
@@ -179,6 +183,10 @@ class QQBot(botpy.Client):
                 logger.success(f"QQ群聊@消息发送成功")
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
+                # 加入消息队列说发送失败
+                failed_content = f"❗️ 错误：消息发送失败：{str(e)}"
+                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
+                self._group_at_message_queue.append((failed_content, group_openid, msg_id, group, is_image))
 
             try:
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
@@ -250,6 +258,10 @@ class QQBot(botpy.Client):
                 logger.success(f"QQ私聊消息发送成功，内容：{content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
+                # 加入消息队列说发送失败
+                failed_content = f"❗️ 错误：消息发送失败：{str(e)}"
+                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
+                self._c2c_message_queue.append((failed_content, user_openid, msg_id, is_image))
         
             try:
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
