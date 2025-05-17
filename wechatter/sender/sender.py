@@ -203,7 +203,7 @@ def _send_msg1(
     if quoted_response:
         # 如果内容是URL，转二维码
         if message.startswith("http://") or message.startswith("https://"):
-            qrcode_path = get_qrcode_saved_path(message)
+            message = get_qrcode_saved_path(message)
             # 成功把url变成qrcode 注意这里的message已经变成了qrcode的路径
             # 注意type要用"localfile"
             type="localfile"
