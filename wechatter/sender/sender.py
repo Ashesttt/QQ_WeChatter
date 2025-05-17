@@ -207,7 +207,6 @@ def _send_msg1(
             # 成功把url变成qrcode 注意这里的message已经变成了qrcode的路径
             # 注意type要用"localfile"
             type="localfile"
-            return
         else:
             message = make_quotable(message=message, quoted_response=quoted_response)
     else:
