@@ -82,7 +82,12 @@ class QQBot(botpy.Client):
         # 定义各队列的消息发送处理函数
         async def process_direct_message(msg_data):
             post_dms = ""
-            content, guild_id, msg_id, is_image = msg_data
+            # 参数兼容处理
+            if len(msg_data) == 4:
+                content, guild_id, msg_id, is_image = msg_data
+                retry_count = 0
+            else:
+                content, guild_id, msg_id, is_image, retry_count = msg_data
             try:
                 params = {
                     "content": content,
@@ -104,8 +109,14 @@ class QQBot(botpy.Client):
                 logger.error(f"QQ频道私信发送失败: {str(e)}")
                 # 加入消息队列说发送失败
                 failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
-                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
-                self._direct_message_queue.append((failed_content, guild_id, msg_id, is_image))
+                retry_count += 1
+                MAX_RETRY = 3
+                if retry_count <= MAX_RETRY:
+                    # 重新加入队列，带上重试次数
+                    self._direct_message_queue.append((failed_content, guild_id, msg_id, is_image, retry_count))
+                    logger.warning(f"QQ频道私信发送失败，已重试{retry_count}次，将再次尝试。")
+                else:
+                    logger.error(f"QQ频道私信发送失败，重试已达上限({MAX_RETRY})，不再重试。内容：{failed_content}")
                 
             try:    
                 # 主动发送返回的post_dms:to_A:{'code': 304023, 'message': '消息提交安全审核成功', 'data': {'message_audit': {'audit_id': 'a542254e-7390-4ec0-81a9-9b03e5df41e5'}}, 'err_code': 40034120, 'trace_id': '490b134028f32983479ee42ccc7d1424'}
@@ -127,7 +138,12 @@ class QQBot(botpy.Client):
             nonlocal last_group_msg_id, last_group_msg_seq, last_group_msg_time
             post_group_message = ""
             # 实现群聊@消息发送逻辑
-            content, group_openid, msg_id, group, is_image = msg_data
+            # 参数兼容处理
+            if len(msg_data) == 5:
+                content, group_openid, msg_id, group, is_image = msg_data
+                retry_count = 0
+            else:
+                content, group_openid, msg_id, group, is_image, retry_count = msg_data
             """
                 由于post_group_message和post_c2c_message方法如果想要多次回复一条信息，需要使用msg_seq（相同的 msg_id + msg_seq 重复发送会失败），
                 因此，先记录下这次的msg_id为last_group_msg_id，然后下次消息队列又来消息时，如果msg_id与last_group_msg_id相同，
@@ -158,7 +174,7 @@ class QQBot(botpy.Client):
                 qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
                 logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_group_queue)，信息是：{modified_content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
-        
+            
 
             try:
                 params = {
@@ -184,10 +200,14 @@ class QQBot(botpy.Client):
                 logger.success(f"QQ群聊@消息发送成功")
             except Exception as e:
                 logger.error(f"QQ群聊@消息发送失败: {str(e)}")
-                # 加入消息队列说发送失败
                 failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
-                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
-                self._group_at_message_queue.append((failed_content, group_openid, msg_id, group, is_image))
+                retry_count += 1
+                MAX_RETRY = 3
+                if retry_count <= MAX_RETRY:
+                    self._group_at_message_queue.append((failed_content, group_openid, msg_id, group, is_image, retry_count))
+                    logger.warning(f"QQ群聊@消息发送失败，已重试{retry_count}次，将再次尝试。")
+                else:
+                    logger.error(f"QQ群聊@消息发送失败，重试已达上限({MAX_RETRY})，不再重试。内容：{failed_content}")
 
             try:
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
@@ -209,8 +229,12 @@ class QQBot(botpy.Client):
             nonlocal last_c2c_msg_id, last_c2c_msg_seq, last_c2c_msg_time
             post_c2c_message = ""
             # 实现私聊消息发送逻辑
-            content, user_openid, msg_id, is_image = msg_data
-        
+            # 参数兼容处理
+            if len(msg_data) == 4:
+                content, user_openid, msg_id, is_image = msg_data
+                retry_count = 0
+            else:
+                content, user_openid, msg_id, is_image, retry_count = msg_data        
             # 获取当前时间戳
             _current_time = get_current_timestamp()
             # 如果收到新消息(msg_id不为None)，而且msg_id与上次的msg_id不同，则发送消息，更新最后消息ID和时间
@@ -259,10 +283,14 @@ class QQBot(botpy.Client):
                 logger.success(f"QQ私聊消息发送成功，内容：{content}，user_openid：{user_openid}，msg_id：{msg_id}，是否为图片：{is_image}。")
             except Exception as e:
                 logger.error(f"QQ私聊消息发送失败: {str(e)}")
-                # 加入消息队列说发送失败
                 failed_content = f"\n❗️ 错误：消息发送失败：{desensitize_message(str(e))}"
-                # 重新加入队列，注意避免死循环（可加重试次数机制，这里简单处理）
-                self._c2c_message_queue.append((failed_content, user_openid, msg_id, is_image))
+                retry_count += 1
+                MAX_RETRY = 3
+                if retry_count <= MAX_RETRY:
+                    self._c2c_message_queue.append((failed_content, user_openid, msg_id, is_image, retry_count))
+                    logger.warning(f"QQ私聊消息发送失败，已重试{retry_count}次，将再次尝试。")
+                else:
+                    logger.error(f"QQ私聊消息发送失败，重试已达上限({MAX_RETRY})，不再重试。内容：{failed_content}")
         
             try:
                 # 由于qq的api无法接收机器人自己的消息，所以需要手动添加
