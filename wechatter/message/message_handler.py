@@ -8,7 +8,6 @@ from wechatter.config import config
 from wechatter.database import QuotedResponse, make_db_session
 from wechatter.message.message_forwarder import MessageForwarder
 from wechatter.models.wechat import Message, SendTo
-from wechatter.sender.notifier import reply_tickled
 
 message_forwarder = MessageForwarder()
 if config["message_forwarding_enabled"]:
@@ -78,6 +77,7 @@ class MessageHandler:
         if message_obj.is_tickled and not message_obj.is_from_self:
             # 回复 Hello, WeChatter
             to = SendTo(person=message_obj.person, group=message_obj.group)
+            from wechatter.app.routers.qq_bot import reply_tickled
             reply_tickled(to)
             return
 

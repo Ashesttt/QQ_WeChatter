@@ -4,6 +4,7 @@ from wechatter.config import config
 from ..basechat import BaseChat
 from ..handlers import command
 from ...models.wechat import SendTo
+from wechatter.utils import run_in_thread
 
 
 class Chat(BaseChat):
@@ -27,6 +28,7 @@ def register_commands(command_name, chat_instance):
         keys=[command_name, f"{command_name}_chat"],
         desc=f"与 {command_name} AI 聊天",
     )
+    @run_in_thread() # 在单独线程中运行
     def chat_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx(command_name, chat_instance.model, to, message, message_obj)
         logger.warning(f"{command_name}命令已注册，模型为 {chat_instance.model}")

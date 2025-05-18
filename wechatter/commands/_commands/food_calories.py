@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 from urllib.parse import quote
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,7 +16,7 @@ from wechatter.utils import get_request
 @command(
     command="food-calories",
     keys=["食物热量", "food-calories", "热量", "calories", "卡路里"],
-    desc="获取食物热量。",
+    desc="获取食物热量信息（数据来源：喵咕美食）。",
 )
 def food_calories_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
@@ -32,137 +33,112 @@ def food_calories_command_handler(to: Union[str, SendTo], message: str = "") -> 
 def get_food_calories_str(message: str) -> str:
     if not message:
         return "查询失败，请输入食物名称"
-    response = get_request(url=f"https://www.boohee.com/food/search?keyword={message}")
-    food_href_list = _parse_food_href_list_response(response)
-    food_detail_list = _get_food_detail_list(food_href_list)
-    result = _generate_food_message(food_detail_list)
-    return result
+
+    search_url = f"https://www.miaofoods.com/search/{quote(message)}.html"
+    response = get_request(url=search_url)
+    food_list = _parse_search_results(response)
+    food_details = _get_food_details(food_list)
+    return _generate_food_message(food_details)
 
 
-def _get_food_detail_list(food_href_list: List) -> List:
-    """
-    获取食物详情列表
-    :param food_href_list: 食物详情链接列表
-    :return: 食物详情列表
-    """
-    food_detail_list = []
-    for i, food in enumerate(food_href_list[:5]):
-        food_name = food.get("name")
-        food_all_name = food.get("all_name")
-        food_href = food.get("href")
-        keyword = _get_url_encoding(food_name)  # 获取URL编码
-        headers = {
-            "referer": f"https://www.boohee.com/food/search?keyword={keyword}",
-        }
-        food_response = get_request(
-            url=f"https://www.boohee.com{food_href}", headers=headers
-        )
-        if not food_response:
-            logger.error(f"获取食物详情失败，食物名称：{food_name}")
-            raise ValueError(f"获取食物详情失败，食物名称：{food_name}")
-        food_detail = _parse_food_detail_response(food_response, food_all_name)
-        food_detail_list.append(food_detail)
-    if not food_detail_list:
-        logger.error("获取食物详情失败,为空列表")
-        raise ValueError("获取食物详情失败,为空列表")
-    return food_detail_list
+def _get_food_details(food_list: List[Dict]) -> List[Dict]:
+    """获取食物详情列表"""
+    details = []
+    for food in food_list[:5]:  # 取前5个结果
+        try:
+            detail_url = f"https://www.miaofoods.com{food['path']}"
+            response = get_request(url=detail_url)
+            detail = _parse_detail_page(response)
+            details.append(detail)
+        except Exception as e:
+            logger.warning(f"获取食物详情失败：{str(e)}")
+            continue
+
+    if not details:
+        logger.error("没有找到有效的营养信息")
+        raise ValueError("没有找到有效的营养信息")
+    return details
 
 
-def _generate_food_message(food_detail_list: List) -> str:
-    """
-    生成食物信息
-    :param food_detail_list: 食物详情列表
-    :return: 食物信息
-    """
-    if not food_detail_list:
+def _generate_food_message(food_details: List[Dict]) -> str:
+    """生成格式化消息"""
+    if not food_details:
         logger.error("食物详情列表为空")
         raise ValueError("食物详情列表为空")
-    food_str = "✨=====食物列表=====✨\n"
 
-    for i, food_detail in enumerate(food_detail_list):
-        energy = food_detail["热量(大卡)"]
-        carbohydrate = food_detail["碳水化合物(克)"]
-        fat = food_detail["脂肪(克)"]
-        protein = food_detail["蛋白质(克)"]
-        dietary_fiber = food_detail["纤维素(克)"]
-        food_all_name = food_detail["food_all_name"]
-        food_str += (
-            f"{i + 1}. {food_all_name}\n"
-            f"    🍲热量(大卡):    {energy}\n"
-            f"    🍞碳水(克):        {carbohydrate}\n"
-            f"    🥓脂肪(克):        {fat}\n"
-            f"    🍗蛋白质(克):    {protein}\n"
-            f"    🥦纤维素(克):    {dietary_fiber}\n"
+    msg = "✨=====食物列表=====✨\n"
+    for idx, item in enumerate(food_details, 1):
+        msg += (
+            f"{idx}. {item['name']}\n"
+            f"   ✅ 分类：{item.get('category', 'N/A')}\n"
+            f"   🔥 热量：{item.get('calories', 'N/A')}kcal\n"
+            f"   🍚 碳水：{item.get('carbohydrate', 'N/A')}g\n"  # 注意保持key一致性
+            f"   🥩 蛋白质：{item.get('protein', 'N/A')}g\n"
+            f"   🧈 脂肪：{item.get('fat', 'N/A')}g\n"
+            "────────────────────\n"
         )
-    food_str += "🔵====含量(100克)====🔵"
-
-    return food_str
+    return msg
 
 
-# 这里也是 parse部分
-def _parse_food_detail_response(
-    response: requests.Response, food_all_name: str
-) -> Dict:
-    """
-    解析食物详情
-    :param response: 请求响应
-    :param food_all_name: 食物全名
-    :return: 食物详情
-    """
+def _parse_search_results(response: requests.Response) -> List[Dict]:
+    """解析搜索结果页面"""
     soup = BeautifulSoup(response.text, "html.parser")
-    food_detail = {}
-    articles = soup.find_all("dd")
-    for article in articles:
-        name = article.select_one("span.dt").text.strip()
-        value = article.select_one("span.dd").text.strip()
-        if name and value:
-            food_detail[name] = value
-    if not food_detail:
-        logger.error("解析食物列表失败")
+    script_tag = soup.find("script", string=lambda t: t and "window.__NUXT__" in t)
+
+    if not script_tag:
+        logger.error("未找到包含 window.__NUXT__ 的脚本标签")
+        raise Bs4ParsingError("解析搜索结果失败")
+
+    script_content = script_tag.string
+    match = re.search(r"curSearchFoodList\s*:\s*\[(.*?)\](,|\})", script_content, re.DOTALL)
+
+    if not match:
+        logger.error("未找到 curSearchFoodList 数据")
         raise Bs4ParsingError("解析食物列表失败")
 
-    food_detail["food_all_name"] = food_all_name
-    return food_detail
+    food_list_str = match.group(1)
+    food_tokens = re.findall(r'foodToken\s*:\s*"(.*?)"', food_list_str)
+
+    return [{"path": f"/detail/{token}.html"} for token in food_tokens[:10]]
 
 
-def _parse_food_href_list_response(response: requests.Response) -> List:
-    """
-    解析食物详情链接列表
-    :param response: 请求响应
-    :return: 食物详情链接列表
-    """
+def _parse_detail_page(response: requests.Response) -> Dict:
+    """解析详情页营养信息"""
     soup = BeautifulSoup(response.text, "html.parser")
-    href_list = []
-    articles = soup.select("div.text-box")
-    if not articles:
-        logger.error("解析食物详情链接失败")
-        raise Bs4ParsingError("解析食物详情链接失败")
-    for article in articles:
-        href_list_item = {}
+    nutrition = {}
 
-        name = article.select_one("a").text.strip()
-        if name:
-            href_list_item["name"] = name.split("，")[0]
-            href_list_item["all_name"] = name
-        href = article.a["href"]
-        if href:
-            href_list_item["href"] = href
+    # 解析基础信息
+    info_div = soup.find("div", class_="food-detail-info")
+    if info_div:
+        for sub_div in info_div.find_all("div", class_="mtb-10"):
+            text = sub_div.get_text(strip=True)
+            if text.startswith("名称："):
+                name_span = sub_div.find("span")
+                if name_span:
+                    nutrition["name"] = name_span.get_text(strip=True)
+            elif text.startswith("分类："):
+                category_span = sub_div.find("span")
+                if category_span:
+                    nutrition["category"] = category_span.get_text(strip=True)
 
-        if href_list_item:
-            href_list.append(href_list_item)
+    # 解析营养成分
+    for div in soup.find_all("div", class_="food-detail-view"):
+        spans = div.find_all("span")
+        if len(spans) == 2:
+            key = spans[0].get_text(strip=True)
+            value = spans[1].get_text(strip=True)
+            key_map = {
+                "热量": "calories",
+                "脂肪": "fat",
+                "蛋白质": "protein",
+                "碳水化合物": "carbohydrate"
+            }
+            if key in key_map:
+                nutrition[key_map[key]] = value
 
-    if not href_list:
-        logger.error("解析食物详情链接失败")
-        raise Bs4ParsingError("解析食物详情链接失败")
+    # 必要字段校验
+    if "name" not in nutrition:
+        logger.warning("未能解析到食物名称")
+        raise ValueError("食物信息不完整")
 
-    return href_list
-
-
-def _get_url_encoding(message: str) -> str:
-    """
-    获取URL编码
-    :param message: 消息
-    :return: URL编码
-    """
-    url_encoding = quote(message)
-    return url_encoding
+    return nutrition

@@ -19,7 +19,14 @@ DEFAULT_TOPIC = "（对话进行中*）"
 DEFAULT_CONVERSATION = [
     {
         "role": "system",
-        "content": f"你的名字是 WeChatter，是一位虚拟助手。今天是{get_current_date()}（年月日），星期{get_current_week()}，现在是{get_current_time()}。",
+        "content": f"""
+        你是一个叫 WeChatter 的虚拟助手。今天是{get_current_date()}，星期{get_current_week()}，现在是{get_current_time()}。
+        请严格遵守以下要求：
+        1. 所有回复必须使用纯文本
+        2. 禁止使用任何 Markdown 格式（包括**粗体*、_斜体_、代码块等）
+        3. 禁止使用列表符号（如- *等）
+        4. 用自然段落的文字回答
+        """
     }
 ]
 
