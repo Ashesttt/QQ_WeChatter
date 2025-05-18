@@ -7,6 +7,7 @@ from .json_manager import load_json, save_json
 from .unique_list import UniqueList, UniqueListDecoder, UniqueListEncoder
 from .url_codec import url_decode, url_encode
 from .url_joiner import join_urls
+from .threading_util import run_in_thread
 
 __all__ = [
     "load_json",
@@ -27,4 +28,5 @@ __all__ = [
     "UniqueList",
     "UniqueListEncoder",
     "UniqueListDecoder",
+    "run_in_thread",
 ]
