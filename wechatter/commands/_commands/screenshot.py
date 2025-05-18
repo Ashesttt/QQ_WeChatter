@@ -57,19 +57,22 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
     try:
         with sync_playwright() as p:
             # 启动Chromium浏览器实例
+            logger.critical("正在启动浏览器实例...")
             browser = p.chromium.launch(
                 args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
             )
             logger.critical("已启动浏览器实例")
 
+            logger.critical("正在创建新页面...")
             page = browser.new_page()
             logger.critical("已创建新页面")
 
+            logger.critical(f"设置超时时间: {timeout}ms")
             page.set_default_timeout(timeout)
 
             logger.critical(f"正在访问URL: {url}")
             page.goto(url)
-            logger.critical(f"URL:{url}页面已加载")
+            logger.critical("页面已加载")
 
             # 如果未提供输出路径，则自动生成文件名
             if not output_path:
@@ -93,9 +96,11 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
                 )
 
             # 截取完整页面截图并保存到指定路径
+            logger.critical(f"正在截图到: {output_path}")
             page.screenshot(path=output_path, full_page=True, type="png")
             logger.critical("截图已完成")
 
+            logger.critical("正在关闭浏览器...")
             browser.close()
             logger.critical("浏览器已关闭")
 
