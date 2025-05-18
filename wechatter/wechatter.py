@@ -26,6 +26,8 @@ def main():
     check_and_create_folder("data/qrcodes")
     check_and_create_folder("data/todos")
     check_and_create_folder("data/text_image")
+    check_and_create_folder("data/upload_image")
+    check_and_create_folder("data/screenshots")
 
     db.create_tables()
     load_games()
