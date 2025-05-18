@@ -52,6 +52,7 @@ def main():
     check_and_create_folder("data/todos")
     check_and_create_folder("data/text_image")
     check_and_create_folder("data/upload_image")
+    check_and_create_folder("data/screenshots")
 
     # 初始化数据库
     db.create_tables()

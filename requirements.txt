@@ -15,3 +15,4 @@ pydantic==2.5.3
 sqlalchemy==2.0.25
 PyYAML~=6.0
 qq-botpy==1.2.1
+playwright
