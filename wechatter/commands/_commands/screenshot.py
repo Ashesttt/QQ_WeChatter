@@ -20,7 +20,7 @@ playwright install chromium(必须手动下载）
     keys=["网页截图", "网站截图", "页面截图", "screenshot"],
     desc="对网页进行截图并发送。用法：/网页截图 [URL]",
 )
-# @run_in_thread()
+@run_in_thread()
 def screenshot_command_handler(to: Union[str, SendTo], message: str = "", message_obj=None) -> None:
     """
     网页截图命令处理函数
@@ -58,14 +58,18 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
         with sync_playwright() as p:
             # 启动Chromium浏览器实例
             browser = p.chromium.launch()
+            logger.critical("正在启动浏览器实例...")
             # 在浏览器中创建一个新的页面（标签页）
             page = browser.new_page()
+            logger.critical("正在创建浏览器标签页...")
 
             # 设置页面加载超时时间，防止页面加载时间过长
             page.set_default_timeout(timeout)
+            logger.critical(f"页面加载超时设置已设置为{timeout}毫秒")
 
             # 访问目标页面
             page.goto(url)
+            logger.critical(f"正在访问页面：{url}")
 
             # 如果未提供输出路径，则自动生成文件名
             if not output_path:
@@ -94,9 +98,11 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
                 full_page=True,
                 type="png"
             )
+            logger.critical(f"网页截图已保存到: {output_path}")
 
             # 关闭浏览器实例
             browser.close()
+            logger.critical("已关闭浏览器实例")
 
             # 检查文件是否成功保存
             if not os.path.exists(output_path):
