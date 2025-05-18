@@ -19,18 +19,6 @@ def people_daily_command_handler(to: Union[str, SendTo], message: str = "") -> N
     """
     发送人民日报pdf
     """
-    _send_people_daily(to, message, type="fileUrl")
-
-
-@command(
-    command="people-daily-url",
-    keys=["人民日报链接", "people-url", "people-daily-url"],
-    desc="获取人民日报url。",
-)
-def people_daily_url_command_handler(to: Union[str, SendTo], message: str = "") -> None:
-    """
-    发送人民日报url
-    """
     _send_people_daily(to, message, type="text")
 
 

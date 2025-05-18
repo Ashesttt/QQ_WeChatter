@@ -386,7 +386,7 @@ class QQBot(botpy.Client):
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    print(f"收到图片：{attachment.url}")
+                    logger.info(f"收到图片：{attachment}")
                     # 图片处理逻辑
                     _type = MessageType.file
         # 构建source
@@ -484,7 +484,7 @@ class QQBot(botpy.Client):
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    print(f"收到图片：{attachment.url}")
+                    logger.info(f"收到图片：{attachment}")
                     # 图片处理逻辑
                     _type = MessageType.file
         # 构建source
@@ -587,7 +587,7 @@ class QQBot(botpy.Client):
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    print(f"收到图片：{attachment.url}")
+                    logger.info(f"收到图片：{attachment}")
                     # 图片处理逻辑
                     _type = MessageType.file
         # 构建source
