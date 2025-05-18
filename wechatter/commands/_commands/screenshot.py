@@ -58,19 +58,21 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
         with sync_playwright() as p:
             # 启动Chromium浏览器实例
             logger.critical("正在启动浏览器实例...")
-            browser = p.chromium.launch(args=["--no-sandbox", "--disable-setuid-sandbox"])
+            browser = p.chromium.launch(
+                args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
+            )
             logger.critical("已启动浏览器实例")
-            # 在浏览器中创建一个新的页面（标签页）
+
+            logger.critical("正在创建新页面...")
             page = browser.new_page()
-            logger.critical("正在创建浏览器标签页...")
+            logger.critical("已创建新页面")
 
-            # 设置页面加载超时时间，防止页面加载时间过长
+            logger.critical(f"设置超时时间: {timeout}ms")
             page.set_default_timeout(timeout)
-            logger.critical(f"页面加载超时设置已设置为{timeout}毫秒")
 
-            # 访问目标页面
+            logger.critical(f"正在访问URL: {url}")
             page.goto(url)
-            logger.critical(f"正在访问页面：{url}")
+            logger.critical("页面已加载")
 
             # 如果未提供输出路径，则自动生成文件名
             if not output_path:
@@ -94,16 +96,13 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
                 )
 
             # 截取完整页面截图并保存到指定路径
-            page.screenshot(
-                path=output_path,
-                full_page=True,
-                type="png"
-            )
-            logger.critical(f"网页截图已保存到: {output_path}")
+            logger.critical(f"正在截图到: {output_path}")
+            page.screenshot(path=output_path, full_page=True, type="png")
+            logger.critical("截图已完成")
 
-            # 关闭浏览器实例
+            logger.critical("正在关闭浏览器...")
             browser.close()
-            logger.critical("已关闭浏览器实例")
+            logger.critical("浏览器已关闭")
 
             # 检查文件是否成功保存
             if not os.path.exists(output_path):
