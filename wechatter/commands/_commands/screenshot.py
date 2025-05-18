@@ -58,8 +58,7 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
         with sync_playwright() as p:
             # 启动Chromium浏览器实例
             browser = p.chromium.launch(
-                # "--no-sandbox", "--disable-setuid-sandbox", 
-                args=["--disable-gpu"]
+                args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
             )
             logger.critical("已启动浏览器实例")
 
