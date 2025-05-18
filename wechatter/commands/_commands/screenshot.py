@@ -57,8 +57,9 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
     try:
         with sync_playwright() as p:
             # 启动Chromium浏览器实例
-            browser = p.chromium.launch()
             logger.critical("正在启动浏览器实例...")
+            browser = p.chromium.launch(args=["--no-sandbox", "--disable-setuid-sandbox"])
+            logger.critical("已启动浏览器实例")
             # 在浏览器中创建一个新的页面（标签页）
             page = browser.new_page()
             logger.critical("正在创建浏览器标签页...")
