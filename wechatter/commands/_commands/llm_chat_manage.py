@@ -58,7 +58,10 @@ def register_commands(command_name, chat_instance):
     )
     def continue_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx_continue(chat_instance.model, to, message)
-
+        
+def get_pure_command_name(command_name):
+    # 去掉-或者_
+    return command_name.replace("-", "").replace("_", "")
 
 for command_name, model_config in llms_config.items():
     chat_instance = Chat(
@@ -68,7 +71,3 @@ for command_name, model_config in llms_config.items():
     )
     chat_instances[command_name] = chat_instance
     register_commands(command_name, chat_instance)
-
-def get_pure_command_name(command_name):
-    # 去掉-或者_
-    return command_name.replace("-", "").replace("_", "")
