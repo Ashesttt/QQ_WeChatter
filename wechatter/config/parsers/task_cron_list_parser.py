@@ -11,17 +11,9 @@ from wechatter.sender import sender
 
 # 一般来说，与数据库有交互的命令都不支持定时任务
 UNSUPPORTED_COMMANDS = [
-    "gpt4",
     "gpt4-chats",
     "gpt4-continue",
     "gpt4-record",
-    "gpt",
-    "gpt-chats",
-    "gpt-continue",
-    "gpt-record",
-    "todo",
-    "todo-remove",
-    "help",
 ]
 
 SEND_FILE_COMMANDS = ["qrcode"]
@@ -73,9 +65,10 @@ def parse_task_cron_list(task_cron_list: List) -> List:
                 raise ValueError(f"[{desc}] 任务的命令不支持定时任务: {cmd}")
             args = tuple(command.get("args", []))
             to_person_list = command.get("to_person_list", [])
+            to_person_qq_c2c_list = command.get("to_person_qq_c2c_list", [])
             to_group_list = command.get("to_group_list", [])
 
-            if not to_group_list and not to_person_list:
+            if not to_group_list and not to_person_qq_c2c_list and not to_person_list:
                 logger.warning(
                     f"[{desc}] 任务的命令没有指定发送目标，跳过此命令: {cmd}"
                 )
@@ -89,6 +82,7 @@ def parse_task_cron_list(task_cron_list: List) -> List:
             def func(
                 _cmd: str,
                 _to_person_list: List,
+                _to_person_qq_c2c_list,
                 _to_group_list: List,
                 _desc: str,
                 *_args,
@@ -96,18 +90,24 @@ def parse_task_cron_list(task_cron_list: List) -> List:
                 # 如果命令支持引用回复
                 if COMMANDS[_cmd]["is_quotable"]:
                     try:
-                        message, q_response = COMMANDS[_cmd]["mainfunc"](*_args)
+                        if "mainfunc" in COMMANDS[_cmd]:
+                            message, q_response = COMMANDS[_cmd]["mainfunc"](*_args)
+                            quoted_response = QuotedResponse(
+                                command=_cmd,
+                                response=q_response,
+                            )
+                        else:
+                            message = f"Command{_cmd} function not found."
                     except TypeError as e:
                         # 如果用户配置的参数不正确
                         logger.error(f"[{_desc}] 任务的命令参数不正确: {str(e)}")
                         raise TypeError(f"[{_desc}] 任务的命令参数不正确: {str(e)}")
-                    quoted_response = QuotedResponse(
-                        command=_cmd,
-                        response=q_response,
-                    )
                 else:  # 不支持引用回复的命令
                     try:
-                        message = COMMANDS[_cmd]["mainfunc"](*_args)
+                        if "mainfunc" in COMMANDS[_cmd]:
+                            message = COMMANDS[_cmd]["mainfunc"](*_args)
+                        else:
+                            message = f"Command:{_cmd} function not found."
                     except TypeError as e:
                         logger.error(f"[{_desc}] 任务的命令参数不正确: {str(e)}")
                         raise TypeError(f"[{_desc}] 任务的命令参数不正确: {str(e)}")
@@ -125,6 +125,15 @@ def parse_task_cron_list(task_cron_list: List) -> List:
                         type=type,
                         quoted_response=quoted_response,
                     )
+                if _to_person_qq_c2c_list:
+                    sender.mass_send_msg(
+                        _to_person_qq_c2c_list,
+                        message,
+                        is_group=False,
+                        type=type,
+                        quoted_response=quoted_response,
+                        is_qq_c2c_list=True,
+                    )
                 if _to_group_list:
                     sender.mass_send_msg(
                         _to_group_list,
@@ -139,7 +148,7 @@ def parse_task_cron_list(task_cron_list: List) -> List:
                         os.remove(message)
                 logger.info(f"[{_desc}] 任务的命令执行成功: {_cmd}")
 
-            funcs.append((func, (cmd, to_person_list, to_group_list, desc, *args)))
+            funcs.append((func, (cmd, to_person_list, to_person_qq_c2c_list, to_group_list, desc, *args)))
         cron_task = CronTask(
             desc=desc,
             enabled=enabled,
