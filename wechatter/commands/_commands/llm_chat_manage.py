@@ -23,9 +23,11 @@ llms_config = config["llms"]
 chat_instances = {}
 
 def register_commands(command_name, chat_instance):
+
+    pure_command_name = get_pure_command_name(command_name)#为了兼容qq的快捷命令（command不能存在符号，如：/deepseekv3, sparkx1）
     @command(
         command=command_name,
-        keys=[command_name, f"{command_name}_chat"],
+        keys=[command_name, f"{command_name}_chat", pure_command_name],
         desc=f"与 {command_name} AI 聊天",
     )
     @run_in_thread() # 在单独线程中运行
@@ -56,7 +58,10 @@ def register_commands(command_name, chat_instance):
     )
     def continue_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx_continue(chat_instance.model, to, message)
-
+        
+def get_pure_command_name(command_name):
+    # 去掉-或者_
+    return command_name.replace("-", "").replace("_", "")
 
 for command_name, model_config in llms_config.items():
     chat_instance = Chat(

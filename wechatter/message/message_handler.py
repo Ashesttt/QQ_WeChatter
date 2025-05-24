@@ -139,10 +139,9 @@ class MessageHandler:
             # 判断是否配置了默认GPT命令，若有则触发GPT命令
             if (
                 message_obj.type != "file"
-                and not message_obj.is_group
                 and message_obj.sender_name in config.get("gpt_mode_person_list", [])
             ):
-                cmd_dict["command"] = config.get("gpt_mode_model", "gpt35")
+                cmd_dict["command"] = config.get("gpt_mode_model", "gemini")
                 cmd_dict["handler"] = self.commands.get(cmd_dict["command"], {}).get(
                     "handler", None
                 )

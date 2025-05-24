@@ -20,6 +20,7 @@ if config["github_webhook_enabled"]:
 scheduler = Scheduler()
 if config["all_task_cron_enabled"]:
     scheduler.cron_task_list = parse_task_cron_list(config["task_cron_list"])
+    print(parse_task_cron_list(config["task_cron_list"]))
 
 
 @app.on_event("startup")
