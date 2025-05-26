@@ -7,6 +7,7 @@
 #
 
 import threading
+import asyncio
 
 import uvicorn
 
@@ -17,6 +18,7 @@ from wechatter.art_text import print_wechatter_art_text
 from wechatter.config import config
 from wechatter.games import load_games
 from wechatter.utils import check_and_create_folder
+from wechatter.commands.mcp.mcpchat import MCPChat
 
 
 def start_web_server():
@@ -40,6 +42,12 @@ def start_qq_bot():
     else:
         from loguru import logger
         logger.error("QQ机器人配置不完整，无法启动机器人")
+
+
+async def cleanup():
+    """清理资源"""
+    for instance in list(MCPChat._instances):  # 使用list复制集合，因为我们在迭代时会修改它
+        await instance.close()
 
 
 def main():
@@ -67,5 +75,9 @@ def main():
     web_thread.daemon = True
     web_thread.start()
 
-    # 主线程运行QQ机器人
-    start_qq_bot()
+    try:
+        # 主线程运行QQ机器人
+        start_qq_bot()
+    finally:
+        # 确保在程序退出时清理资源
+        asyncio.run(cleanup())

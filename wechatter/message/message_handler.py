@@ -43,7 +43,7 @@ class MessageHandler:
         self.quoted_handlers = quoted_handlers
         self.games = games
 
-    def handle_message(self, message_obj: Message):
+    async def handle_message(self, message_obj: Message):
         """
         处理消息
         :param message_obj: 消息对象
@@ -134,7 +134,7 @@ class MessageHandler:
                 logger.debug("该消息为群消息，但未@机器人，不处理")
                 return
             # 开始处理命令
-            _execute_command(cmd_dict, to, message_obj)
+            await _execute_command(cmd_dict, to, message_obj)
         else:
             # 判断是否配置了默认GPT命令，若有则触发GPT命令
             if (
@@ -153,7 +153,7 @@ class MessageHandler:
                     cmd_dict["command"], {}
                 ).get("param_count", 0)
                 logger.info(f"默认触发GPT命令：{cmd_dict['command']}")
-                _execute_command(cmd_dict, to, message_obj)
+                await _execute_command(cmd_dict, to, message_obj)
             logger.debug("该消息不是命令类型")
 
     def __parse_command(self, content: str, is_mentioned: bool, is_group: bool) -> Dict:
@@ -195,7 +195,7 @@ class MessageHandler:
         return cmd_dict
 
 
-def _execute_command(cmd_dict: Dict, to: SendTo, message_obj: Message):
+async def _execute_command(cmd_dict: Dict, to: SendTo, message_obj: Message):
     """
     执行命令
     :param cmd_dict: 命令字典
@@ -206,12 +206,12 @@ def _execute_command(cmd_dict: Dict, to: SendTo, message_obj: Message):
     cmd_handler = cmd_dict["handler"]
     if cmd_handler is not None:
         if cmd_dict["param_count"] == 2:
-            cmd_handler(
+            await cmd_handler(
                 to=to,
                 message=cmd_dict["args"],
             )
         elif cmd_dict["param_count"] == 3:
-            cmd_handler(
+            await cmd_handler(
                 to=to,
                 message=cmd_dict["args"],
                 message_obj=message_obj,

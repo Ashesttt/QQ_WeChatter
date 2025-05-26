@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 from typing import List, Union, Dict, Any
+import traceback
 
 from loguru import logger
 
@@ -33,25 +34,55 @@ DEFAULT_CONVERSATION = [
 ]
 
 class MCPChat:
+    _instances = set()  # 用于跟踪所有实例
+
     def __init__(self, model: str, api_key: str, base_url: str):
         self.model = model
         self.api_key = api_key
         self.base_url = base_url
         self.mcp_client = None
-        self._init_lock = asyncio.Lock()#初始化锁 防止多个线程同时初始化
+        self._init_lock = asyncio.Lock()
+        MCPChat._instances.add(self)
 
     async def ensure_initialized(self):
         """确保MCP客户端已初始化"""
         if self.mcp_client is None:
             async with self._init_lock:
                 if self.mcp_client is None:
-                    self.mcp_client = await MCPChatClient(
-                        model=self.model,
-                        api_key=self.api_key,
-                        base_url=self.base_url
-                    ).initialize()
+                    try:
+                        self.mcp_client = await MCPChatClient(
+                            model=self.model,
+                            api_key=self.api_key,
+                            base_url=self.base_url
+                        ).initialize()
+                    except Exception as e:
+                        logger.error(f"初始化MCP客户端失败: {str(e)}")
+                        raise
 
-    def mcp_gptx(self, command_name: str, model: str, to: SendTo, message: str = "", message_obj=None) -> None:
+    async def _async_chat(self, chat_info: GptChatInfo, message: str, message_obj, to: SendTo):
+        """异步处理聊天请求"""
+        try:
+            await self.ensure_initialized()
+            response = await self.mcp_client.chat(chat_info.get_conversation() + [{"role": "user", "content": message}])
+            logger.info(response)
+            sender.send_msg(to, response)
+        except Exception as e:
+            error_message = f"调用 {self.model} 服务失败，错误信息：{str(e)}"
+            logger.error(f"{error_message}\n{traceback.format_exc()}")
+            sender.send_msg(to, error_message)
+
+    async def close(self):
+        """关闭MCP客户端"""
+        try:
+            if self.mcp_client:
+                await self.mcp_client.close()
+                self.mcp_client = None
+        except Exception as e:
+            logger.error(f"关闭MCP客户端失败: {str(e)}")
+        finally:
+            MCPChat._instances.remove(self)
+
+    async def mcp_gptx(self, command_name: str, model: str, to: SendTo, message: str = "", message_obj=None) -> None:
         """主要聊天入口函数"""
         person = to.person
         # 获取文件夹下最新的对话记录
@@ -74,20 +105,7 @@ class MCPChat:
                 chat_info = self.create_chat(person, model)
                 logger.info("无历史对话记录，创建新对话成功")
                 sender.send_msg(to, "无历史对话记录，创建新对话成功")
-
-            asyncio.run(self._async_chat(chat_info, message, message_obj, to))
-
-    async def _async_chat(self, chat_info: GptChatInfo, message: str, message_obj, to: SendTo):
-        """异步处理聊天请求"""
-        try:
-            await self.ensure_initialized()
-            response = await self.chat(chat_info, message, message_obj)
-            logger.info(response)
-            sender.send_msg(to, response)
-        except Exception as e:
-            error_message = f"调用 {self.model} 服务失败，错误信息：{str(e)}"
-            logger.error(error_message)
-            sender.send_msg(to, error_message)
+            await self._async_chat(chat_info, message, message_obj, to)
 
     # 其他方法与basechat.py中相同，只需修改chat方法
 

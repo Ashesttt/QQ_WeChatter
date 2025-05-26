@@ -22,8 +22,8 @@ def register_commands(command_name, chat_instance):
         desc=f"与 {command_name} AI 聊天",
     )
     # @run_in_thread() # 在单独线程中运行
-    def mcp_chat_command_handler(to: SendTo, message: str = "", message_obj=None):
-        chat_instance.mcp_gptx(command_name, chat_instance.model, to, message, message_obj)
+    async def mcp_chat_command_handler(to: SendTo, message: str = "", message_obj=None):
+        await chat_instance.mcp_gptx(command_name, chat_instance.model, to, message, message_obj)
         logger.warning(f"{command_name}命令已注册，模型为 {chat_instance.model}")
 
     @command(
