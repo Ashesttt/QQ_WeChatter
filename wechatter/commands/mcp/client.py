@@ -41,16 +41,18 @@ class MCPChatClient:
             if not self._process:
                 logger.info("正在启动MCP服务器进程...")
                 
-                # 获取服务器脚本的绝对路径
-                current_dir = Path(__file__).parent
-                server_script = current_dir / "server.py"
-                
-                if not server_script.exists():
-                    raise FileNotFoundError(f"服务器脚本不存在: {server_script}")
+                # # 获取服务器脚本的绝对路径
+                # current_dir = Path(__file__).parent
+                # server_script = current_dir / "server.py"
+                # 
+                # if not server_script.exists():
+                #     raise FileNotFoundError(f"服务器脚本不存在: {server_script}")
                 
                 self._process = await asyncio.create_subprocess_exec(
                     sys.executable,  # 使用当前Python解释器
-                    str(server_script),  # 直接运行Python文件
+                    # str(server_script),  # 直接运行Python文件
+                    "-m",
+                    "wechatter.commands.mcp.server",
                     stdin=asyncio.subprocess.PIPE,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
