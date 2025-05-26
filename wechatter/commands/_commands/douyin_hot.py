@@ -17,7 +17,7 @@ COMMAND_NAME = "douyin-hot"
     keys=["抖音热搜", "douyin-hot"],
     desc="获取抖音热搜。",
 )
-def douyin_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def douyin_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_douyin_hot_str()
     except Exception as e:

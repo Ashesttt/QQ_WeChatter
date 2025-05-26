@@ -37,26 +37,26 @@ def register_commands(command_name, chat_instance):
 
     @command(
         command=f"{command_name}-chats",
-        keys=[f"{command_name}-chats", f"{command_name}对话记录"],
+        keys=[f"{command_name}-chats", f"{command_name}对话记录", f"{pure_command_name}-chats", f"{pure_command_name}对话记录"],
         desc=f"列出{command_name}对话记录。",
     )
-    def chats_command_handler(to: SendTo, message: str = "", message_obj=None):
+    async def chats_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx_chats(chat_instance.model, to, message, message_obj)
 
     @command(
         command=f"{command_name}-record",
-        keys=[f"{command_name}-record", f"{command_name}记录"],
+        keys=[f"{command_name}-record", f"{command_name}记录", f"{pure_command_name}-record", f"{pure_command_name}记录"],
         desc=f"获取{command_name}对话记录。",
     )
-    def record_command_handler(to: SendTo, message: str = "", message_obj=None):
+    async def record_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx_record(chat_instance.model, to, message)
 
     @command(
         command=f"{command_name}-continue",
-        keys=[f"{command_name}-continue", f"{command_name}继续"],
+        keys=[f"{command_name}-continue", f"{command_name}继续", f"{pure_command_name}-continue", f"{pure_command_name}继续"],
         desc=f"继续{command_name}对话。",
     )
-    def continue_command_handler(to: SendTo, message: str = "", message_obj=None):
+    async def continue_command_handler(to: SendTo, message: str = "", message_obj=None):
         chat_instance.gptx_continue(chat_instance.model, to, message)
         
 def get_pure_command_name(command_name):

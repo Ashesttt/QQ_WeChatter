@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
@@ -18,7 +19,7 @@ from wechatter.utils import get_request
     keys=["冷知识", "trivia"],
     desc="获取冷知识。",
 )
-def trivia_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def trivia_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     random_number = random.randint(1, 946)  # nosec
     try:
         response = get_request(
@@ -71,3 +72,25 @@ def _generate_trivia_message(trivia_list: List, random_number) -> str:
     trivia_str += f"3.{trivia_list[random_numbers[2]]}\n"
     trivia_str += f"❇️第{random_number}期的第{random_numbers}条冷知识❇️"
     return trivia_str
+
+@mcp_server.tool(
+    name="get_trivia",
+    description="获取冷知识。",
+)
+async def get_trivia():
+    """
+    获取冷知识
+    :return: 返回冷知识
+    """
+    random_number = random.randint(1, 946)  # nosec
+    try:
+        response = get_request(
+            url=f"http://www.zhangzaixi.com/shiwangelengzhishi/{random_number}.html"
+        )
+        trivia_list = _parse_trivia_response(response)
+        result = _generate_trivia_message(trivia_list, random_number)
+        return result
+    except Exception as e:
+        error_message = f"获取冷知识失败，错误信息：{str(e)}"
+        logger.error(error_message)
+        return error_message

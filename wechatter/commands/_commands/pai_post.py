@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import QuotedResponse, SendTo
 from wechatter.sender import sender
@@ -19,7 +20,7 @@ COMMAND_NAME = "pai-post"
     keys=["派早报", "pai-post"],
     desc="获取少数派早报。",
 )
-def pai_post_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def pai_post_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_pai_post_str()
     except Exception as e:
@@ -113,3 +114,20 @@ def _generate_pai_post_quoted_response(pai_post_list: List) -> str:
         if href:
             result[str(i + 1)] = url_encode(base_url + href)
     return json.dumps(result)
+
+@mcp_server.tool(
+    name="get_pai_post_str",
+    description="获取少数派早报。",
+)
+async def get_pai_post():
+    """
+    获取少数派早报
+    :return: 返回少数派早报
+    """
+    try:
+        result, _ = get_pai_post_str()
+        return result
+    except Exception as e:
+        error_message = f"获取少数派早报失败，错误信息: {str(e)}"
+        logger.error(error_message)
+        return error_message

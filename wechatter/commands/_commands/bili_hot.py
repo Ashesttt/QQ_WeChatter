@@ -18,7 +18,7 @@ COMMAND_NAME = "bili-hot"
     keys=["b站热搜", "bili-hot"],
     desc="获取b站热搜。",
 )
-def bili_hot_command_handler(to: Union[SendTo, str], message: str = ""):
+async def bili_hot_command_handler(to: Union[SendTo, str], message: str = ""):
     try:
         result, q_response = get_bili_hot_str()
     except Exception as e:
