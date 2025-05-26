@@ -12,12 +12,12 @@ class MCPServer:
         self.tools = []
         self._tool_functions = {}
         # 配置日志
-        logger.remove()
+        # logger.remove()
         # 将日志输出到stderr，并确保不会干扰stdout的JSON通信
-        logger.add(sys.stderr, level="ERROR", format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
+        # logger.add(sys.stderr, level="ERROR", format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>")
         
         # 禁用urllib3的调试日志
-        logging.getLogger('urllib3').setLevel(logging.WARNING)
+        # logging.getLogger('urllib3').setLevel(logging.WARNING)
 
     def tool(self, name: Optional[str] = None, description: Optional[str] = None):
         """工具装饰器"""

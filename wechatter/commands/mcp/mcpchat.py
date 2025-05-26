@@ -63,7 +63,7 @@ class MCPChat:
         """异步处理聊天请求"""
         try:
             await self.ensure_initialized()
-            response = await self.mcp_client.chat(chat_info.get_conversation() + [{"role": "user", "content": message}])
+            response = await self.mcp_chat(chat_info, message, message_obj)
             logger.info(response)
             sender.send_msg(to, response)
         except Exception as e:
@@ -92,7 +92,7 @@ class MCPChat:
             # 判断对话是否有效
             sender.send_msg(to, "正在创建新对话...")
             if chat_info is None or self._is_chat_valid(chat_info):
-                self.create_chat(person, model)
+                await self.create_chat(person, model)
                 logger.info("创建新对话成功")
                 sender.send_msg(to, "创建新对话成功")
                 return
@@ -109,7 +109,7 @@ class MCPChat:
 
     # 其他方法与basechat.py中相同，只需修改chat方法
 
-    async def chat(self, chat_info: GptChatInfo, message: str, message_obj) -> str:
+    async def mcp_chat(self, chat_info: GptChatInfo, message: str, message_obj) -> str:
         """
         持续对话，使用MCP客户端
         """
@@ -119,7 +119,7 @@ class MCPChat:
         full_messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv
 
         # 使用MCP客户端进行对话
-        response = await self.mcp_client.chat(full_messages)
+        response = await self.mcp_client.process_llm_conversation_with_tools(full_messages)
 
         # 保存对话记录
         newconv.append({"role": "assistant", "content": response})
@@ -178,14 +178,14 @@ class MCPChat:
         logger.info(response)
         sender.send_msg(to, response)
 
-    def create_chat(self, person: Person, model: str) -> GptChatInfo:
+    async def create_chat(self, person: Person, model: str) -> GptChatInfo:
         """
         创建一个新的对话
         :param person: 用户
         :param model: 模型
         :return: 新的对话信息
         """
-        self._save_chatting_chat_topic(person, model)
+        await self._save_chatting_chat_topic(person, model)
         self._set_all_chats_not_chatting(person, model)
         gpt_chat_info = GptChatInfo(
             person=person,
@@ -360,7 +360,7 @@ class MCPChat:
                 return None
             return chat_info.to_model()
 
-    def _save_chatting_chat_topic(self, person: Person, model: str) -> None:
+    async def _save_chatting_chat_topic(self, person: Person, model: str) -> None:
         """
         生成正在进行的对话的主题
         """
@@ -372,7 +372,7 @@ class MCPChat:
             logger.error("对话记录长度小于1")
             return
 
-        topic = self._generate_chat_topic(chat_info)
+        topic = await self._generate_chat_topic(chat_info)
         if not topic:
             logger.error("生成对话主题失败")
             raise ValueError("生成对话主题失败")
@@ -382,21 +382,39 @@ class MCPChat:
             chat_info.topic = topic
             session.commit()
 
-    def _generate_chat_topic(self, chat_info: GptChatInfo) -> str:
+    async def _generate_chat_topic(self, chat_info: GptChatInfo) -> str:
         """
         生成对话主题，用于保存对话记录
         """
         assert self._is_chat_valid(chat_info)
         # 通过一次对话生成对话主题，但这次对话不保存到对话记录中
         prompt = "请用10个字以内总结一下这次对话的主题，不带任何标点符号"
-        topic = self._chat(
-            chat_info=chat_info, message=prompt, message_obj=None, is_save=False
-        )
-        # 限制主题长度
-        if len(topic) > 21:
-            topic = topic[:21] + "..."
-        logger.info(f"生成对话主题：{topic}")
-        return topic
+        
+        try:
+            # 使用普通的LLM对话，不使用MCP工具
+            response = await self.mcp_client.llm.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "你是一个帮助总结对话主题的助手。请用10个字以内总结对话主题，不要使用任何标点符号。"
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            topic = response.choices[0].message.content.strip()
+
+            # 限制主题长度
+            if len(topic) > 21:
+                topic = topic[:21] + "..."
+            logger.info(f"生成对话主题：{topic}")
+            return topic
+        except Exception as e:
+            logger.error(f"生成对话主题失败: {str(e)}")
+            return DEFAULT_TOPIC
 
     @staticmethod
     def _has_topic(chat_info: GptChatInfo) -> bool:

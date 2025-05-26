@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 from typing import List, Dict, Any, Optional
+import sys
+from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -38,11 +40,21 @@ class MCPChatClient:
         try:
             if not self._process:
                 logger.info("正在启动MCP服务器进程...")
+                
+                # 获取服务器脚本的绝对路径
+                current_dir = Path(__file__).parent
+                server_script = current_dir / "server.py"
+                
+                if not server_script.exists():
+                    raise FileNotFoundError(f"服务器脚本不存在: {server_script}")
+                
                 self._process = await asyncio.create_subprocess_exec(
-                    "python", "-m", "wechatter.commands.mcp.server",
+                    sys.executable,  # 使用当前Python解释器
+                    str(server_script),  # 直接运行Python文件
                     stdin=asyncio.subprocess.PIPE,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
+                    env=os.environ.copy()  # 复制当前环境变量
                 )
                 self._stdin = self._process.stdin
                 self._stdout = self._process.stdout
@@ -138,9 +150,9 @@ class MCPChatClient:
                     logger.info("正在初始化MCP客户端...")
                     await self._start_server()
                     
-                    # 等待服务器启动
-                    logger.info("等待服务器启动...")
-                    await asyncio.sleep(2)  # 增加等待时间
+                    # # 等待服务器启动
+                    # logger.info("等待服务器启动...")
+                    # await asyncio.sleep(2)  # 增加等待时间
                     
                     # 发送初始化请求
                     logger.info("正在获取工具列表...")
@@ -164,7 +176,7 @@ class MCPChatClient:
             await self._stop_server()
             raise
 
-    async def chat(self, messages: List[Dict[str, str]]) -> str:
+    async def process_llm_conversation_with_tools(self, messages: List[Dict[str, str]]) -> str:
         """
         与LLM进行对话，支持工具调用
         
