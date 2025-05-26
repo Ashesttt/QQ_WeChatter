@@ -60,6 +60,7 @@ class MCPChat:
                     except Exception as e:
                         logger.error(f"初始化MCP客户端失败: {str(e)}")
                         raise
+        return self.mcp_client  # 添加返回值
 
     async def _async_chat(self, chat_info: GptChatInfo, message: str, message_obj, to: SendTo):
         """异步处理聊天请求"""
