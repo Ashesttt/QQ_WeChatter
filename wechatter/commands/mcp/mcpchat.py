@@ -118,8 +118,12 @@ class MCPChat:
         """
         newconv = [{"role": "user", "content": message}]
 
+        conversation = chat_info.get_conversation()
+        if len(conversation) > 0:
         # 构建完整对话历史
-        full_messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv
+            full_messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv
+        else:
+            full_messages = DEFAULT_CONVERSATION + newconv
 
         # 使用MCP客户端进行对话
         response = await self.mcp_client.process_llm_conversation_with_tools(full_messages)
