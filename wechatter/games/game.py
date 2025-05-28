@@ -5,7 +5,7 @@ from loguru import logger
 
 from wechatter.database import GameStates as DbGameStates, make_db_session
 from wechatter.models.game import GameStates
-from wechatter.models.wechat import Group, Person
+from wechatter.models.wechat import Group, Person, SendTo
 from wechatter.sender import sender
 from wechatter.utils import UniqueList
 
@@ -109,7 +109,7 @@ class Game(ABC):
                 return game_states
             return None
 
-    def create_game(self):
+    def create_game(self, to: SendTo):
         """
         创建游戏
         """
@@ -124,15 +124,16 @@ class Game(ABC):
             _game_states = DbGameStates.from_model(game_states)
             session.add(_game_states)
             session.commit()
-            self.create()
+            self.create(to)
 
-    def start_game(self, player: Person, game_states: GameStates):
+    def start_game(self, player: Person, game_states: GameStates, to: SendTo):
         # 消息发送者是否为游戏创建者
         if player.id != self.game_host_person.id:
             logger.warning(
                 f"⚠️ 只有游戏创建者 {self.game_host_person.name} 可以开始游戏！"
             )
             self._send_msg(
+                to,
                 f"⚠️ 只有游戏创建者 {self.game_host_person.name} 可以开始游戏！"
             )
             return
@@ -140,7 +141,7 @@ class Game(ABC):
         # 判断游戏是否已经开始
         if self.is_started:
             logger.warning("⚠️ 游戏已开始！")
-            self._send_msg("⚠️ 游戏已开始！")
+            self._send_msg(to, "⚠️ 游戏已开始！")
             return
         # 判断游戏人数是否满足最少游戏人数
         if len(self.game_players) < self.least_player_num:
@@ -148,12 +149,13 @@ class Game(ABC):
                 f"⚠️ 游戏人数不足，无法开始游戏！最低游戏人数为 {self.least_player_num} 人。"
             )
             self._send_msg(
+                to, 
                 f"⚠️ 游戏人数不足，无法开始游戏！最低游戏人数为 {self.least_player_num} 人。"
             )
             return
 
         self.is_started = True
-        self.start(game_states)
+        self.start(game_states, to)
 
         with make_db_session() as session:
             _game_states = (
@@ -166,14 +168,14 @@ class Game(ABC):
 
         logger.info("游戏开始！")
 
-    def join_game(self, player: Person, message: str, game_states: GameStates):
+    def join_game(self, player: Person, message: str, game_states: GameStates, to: SendTo):
         """
         加入游戏
         """
         # 判断游戏是否已经开始
         if self.is_started:
             logger.warning("⚠️ 游戏已开始！无法加入游戏！")
-            self._send_msg("⚠️ 游戏已开始！无法加入游戏！")
+            self._send_msg(to, "⚠️ 游戏已开始！无法加入游戏！")
             return
 
         # 判断游戏人数是否大于等于最多游戏人数
@@ -183,6 +185,7 @@ class Game(ABC):
                 f"⚠️ 游戏人数已满，无法加入游戏！最多游戏人数为 {self.most_player_num} 人。"
             )
             self._send_msg(
+                to,
                 f"⚠️ 游戏人数已满，无法加入游戏！最多游戏人数为 {self.most_player_num} 人。"
             )
             return
@@ -194,7 +197,7 @@ class Game(ABC):
             # 已经在游戏中
             except ValueError:
                 logger.warning(f"⚠️ 加入游戏失败，{player.name} 已经在游戏中！")
-                self._send_msg(f"⚠️ 加入游戏失败，{player.name} 已经在游戏中！")
+                self._send_msg(to, f"⚠️ 加入游戏失败，{player.name} 已经在游戏中！")
                 return
 
         if len(self.game_players) >= self.most_player_num:
@@ -221,11 +224,11 @@ class Game(ABC):
                 join_msg += "游戏人数已满，使用 start 命令开始游戏。"
             else:
                 join_msg += "满足最低游戏人数，使用 start 命令开始游戏。"
-            self._send_msg(join_msg)
+            self._send_msg(to, join_msg)
 
-    def play_game(self, player: Person, message: str, game_states: GameStates):
+    def play_game(self, player: Person, message: str, game_states: GameStates, to: SendTo):
         try:
-            self.play(player, message, game_states)
+            self.play(player, message, game_states, to)
         except Exception:
             logger.error("游戏回合出现异常！")
         else:
@@ -240,8 +243,8 @@ class Game(ABC):
                 _game_states.update(game_states)
                 session.commit()
 
-    def over_game(self, message: str, game_states: GameStates):
-        self.over(message, game_states)
+    def over_game(self, message: str, game_states: GameStates, to: SendTo):
+        self.over(message, game_states, to)
         with make_db_session() as session:
             _game_states = (
                 session.query(DbGameStates).filter_by(id=game_states.id).first()
@@ -250,7 +253,7 @@ class Game(ABC):
             _game_states.update(game_states)
             session.commit()
         logger.info("游戏结束！")
-        self._send_msg("游戏结束！")
+        self._send_msg(to, "游戏结束！")
 
     @staticmethod
     def generate_raw_create_msg(title: str):
@@ -279,14 +282,15 @@ class Game(ABC):
             result["game_host_group"] = self.game_host_group.to_dict()
         return result
 
-    def _send_msg(self, message: str, type: str = "text"):
+    def _send_msg(self, to: SendTo, message: str, type: str = "text"):
         """
         发送给游戏房间消息
+        :param to: 
         :param message: 消息内容
         :param type: 消息类型
         """
         print(self.sender_name)
-        sender.send_msg(self.sender_name, message, type=type, is_group=self.is_group)
+        sender.send_msg(to, message, type=type, is_group=self.is_group)
 
     def next_player(self):
         """
@@ -305,14 +309,14 @@ class Game(ABC):
         pass
 
     @abstractmethod
-    def create(self):
+    def create(self, to):
         """
         创建游戏房间
         """
         pass
 
     @abstractmethod
-    def start(self, game_states: GameStates):
+    def start(self, game_states: GameStates, to: SendTo):
         """
         开始游戏
         """
@@ -326,14 +330,14 @@ class Game(ABC):
         pass
 
     @abstractmethod
-    def play(self, player: Person, message: str, game_states: GameStates):
+    def play(self, player: Person, message: str, game_states: GameStates, to: SendTo):
         """
         进行一回合游戏
         """
         pass
 
     @abstractmethod
-    def over(self, message: str, game_states: GameStates):
+    def over(self, message: str, game_states: GameStates, to: SendTo):
         """
         结束游戏
         """

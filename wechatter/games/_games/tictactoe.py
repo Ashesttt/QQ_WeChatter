@@ -48,28 +48,28 @@ class Tictactoe(Game):
         self.board = data["board"]
 
     @override
-    def create(self):
+    def create(self, to):
         create_msg = self.generate_raw_create_msg("井字棋游戏")
-        self._send_msg(create_msg)
+        self._send_msg(to, create_msg)
 
     @override
-    def start(self, game_states):
+    def start(self, game_states, to):
         # 保存初始棋盘到游戏棋盘
         shutil.copy(self.initial_board_image_path, self.gaming_board_image_path)
-        self._send_msg(self.initial_board_image_path, type="localfile")
+        self._send_msg(to, self.initial_board_image_path, type="localfile")
 
     @override
     def join(self, player, message, game_states):
         pass
 
     @override
-    def play(self, player, message, game_states):
+    def play(self, player, message, game_states, to):
         # 检测message是否符合 x,y 或者 x y 的格式
         # TODO: 多分割符写成工具函数
         split_list = re.split(r"[\s,]+", message)
         if len(split_list) != 2:
             logger.info("⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
-            self._send_msg("⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
+            self._send_msg(to, "⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
             raise ValueError
 
         if self.current_player_index != self.game_players.index(player):
@@ -77,22 +77,23 @@ class Tictactoe(Game):
                 f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
             )
             self._send_msg(
+                to,
                 f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
             )
             raise ValueError
         x, y = split_list
         if not x.isdigit() or not y.isdigit():
             logger.info("⚠️ 请输入有效的坐标！")
-            self._send_msg("⚠️ 请输入有效的坐标！")
+            self._send_msg(to, "⚠️ 请输入有效的坐标！")
             raise ValueError
         x, y = int(x) - 1, int(y) - 1
         if not (0 <= x < 3 and 0 <= y < 3):
             logger.info("⚠️ 坐标超出范围！")
-            self._send_msg("⚠️ 坐标超出范围！")
+            self._send_msg(to, "⚠️ 坐标超出范围！")
             raise ValueError
         if self.board[x][y] != 0:
             logger.info("⚠️ 该位置已经有棋子了！")
-            self._send_msg("⚠️ 该位置已经有棋子了！")
+            self._send_msg(to, "⚠️ 该位置已经有棋子了！")
             raise ValueError
 
         # 玩家1为 O
@@ -110,23 +111,23 @@ class Tictactoe(Game):
         else:
             logger.error("玩家索引错误！")
             raise ValueError("玩家索引错误！")
-        self._send_msg(self.gaming_board_image_path, type="localfile")
+        self._send_msg(to, self.gaming_board_image_path, type="localfile")
 
         # 判断胜利
         winner = self.__judge_winner()
         if winner == 1:
-            self._send_msg(f"🎉 玩家1 {self.game_players[0].name} 胜利！")
+            self._send_msg(to, f"🎉 玩家1 {self.game_players[0].name} 胜利！")
             self.over_game(message="", game_states=game_states)
         elif winner == 2:
-            self._send_msg(f"🎉 玩家2 {self.game_players[1].name} 胜利！")
+            self._send_msg(to, f"🎉 玩家2 {self.game_players[1].name} 胜利！")
             self.over_game(message="", game_states=game_states)
         elif winner == 0:
-            self._send_msg("🤝 平局！")
+            self._send_msg(to ,"🤝 平局！")
             self.over_game(message="", game_states=game_states)
 
     @override
-    def over(self, message, game_states):
-        self._send_msg(message)
+    def over(self, message, game_states, to):
+        self._send_msg(to, message)
 
     def __judge_winner(self):
         """
