@@ -64,66 +64,73 @@ class Tictactoe(Game):
 
     @override
     def play(self, player, message, game_states, to):
-        # 检测message是否符合 x,y 或者 x y 的格式
-        # TODO: 多分割符写成工具函数
-        split_list = re.split(r"[\s,]+", message)
-        if len(split_list) != 2:
-            logger.info("⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
-            self._send_msg(to, "⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
-            raise ValueError
+        try:
+            # 检测message是否符合 x,y 或者 x y 的格式
+            split_list = re.split(r"[\s,]+", message)
+            if len(split_list) != 2:
+                logger.info("⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
+                self._send_msg(to, "⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
+                raise ValueError("坐标格式错误")
 
-        if self.current_player_index != self.game_players.index(player):
-            logger.info(
-                f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
-            )
-            self._send_msg(
-                to,
-                f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
-            )
-            raise ValueError
-        x, y = split_list
-        if not x.isdigit() or not y.isdigit():
-            logger.info("⚠️ 请输入有效的坐标！")
-            self._send_msg(to, "⚠️ 请输入有效的坐标！")
-            raise ValueError
-        x, y = int(x) - 1, int(y) - 1
-        if not (0 <= x < 3 and 0 <= y < 3):
-            logger.info("⚠️ 坐标超出范围！")
-            self._send_msg(to, "⚠️ 坐标超出范围！")
-            raise ValueError
-        if self.board[x][y] != 0:
-            logger.info("⚠️ 该位置已经有棋子了！")
-            self._send_msg(to, "⚠️ 该位置已经有棋子了！")
-            raise ValueError
+            if self.current_player_index != self.game_players.index(player):
+                logger.info(
+                    f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
+                )
+                self._send_msg(
+                    to,
+                    f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
+                )
+                raise ValueError("不是当前玩家的回合")
 
-        # 玩家1为 O
-        if self.current_player_index == 0:
-            self.board[x][y] = 1
-            self.gaming_board_image_path = self.__draw_board(
-                self.gaming_board_image_path, x, y
-            )
-        # 玩家2为 X
-        elif self.current_player_index == 1:
-            self.board[x][y] = 2
-            self.gaming_board_image_path = self.__draw_board(
-                self.gaming_board_image_path, x, y
-            )
-        else:
-            logger.error("玩家索引错误！")
-            raise ValueError("玩家索引错误！")
-        self._send_msg(to, self.gaming_board_image_path, type="localfile")
+            x, y = split_list
+            if not x.isdigit() or not y.isdigit():
+                logger.info("⚠️ 请输入有效的坐标！")
+                self._send_msg(to, "⚠️ 请输入有效的坐标！")
+                raise ValueError("坐标必须是数字")
 
-        # 判断胜利
-        winner = self.__judge_winner()
-        if winner == 1:
-            self._send_msg(to, f"🎉 玩家1 {self.game_players[0].name} 胜利！")
-            self.over_game(message="", game_states=game_states)
-        elif winner == 2:
-            self._send_msg(to, f"🎉 玩家2 {self.game_players[1].name} 胜利！")
-            self.over_game(message="", game_states=game_states)
-        elif winner == 0:
-            self._send_msg(to ,"🤝 平局！")
-            self.over_game(message="", game_states=game_states)
+            x, y = int(x) - 1, int(y) - 1
+            if not (0 <= x < 3 and 0 <= y < 3):
+                logger.info("⚠️ 坐标超出范围！")
+                self._send_msg(to, "⚠️ 坐标超出范围！")
+                raise ValueError("坐标超出范围")
+
+            if self.board[x][y] != 0:
+                logger.info("⚠️ 该位置已经有棋子了！")
+                self._send_msg(to, "⚠️ 该位置已经有棋子了！")
+                raise ValueError("位置已被占用")
+
+            # 玩家1为 O
+            if self.current_player_index == 0:
+                self.board[x][y] = 1
+                self.gaming_board_image_path = self.__draw_board(
+                    self.gaming_board_image_path, x, y
+                )
+            # 玩家2为 X
+            elif self.current_player_index == 1:
+                self.board[x][y] = 2
+                self.gaming_board_image_path = self.__draw_board(
+                    self.gaming_board_image_path, x, y
+                )
+            else:
+                logger.error("玩家索引错误！")
+                raise ValueError("玩家索引错误")
+
+            self._send_msg(to, self.gaming_board_image_path, type="localfile")
+
+            # 判断胜利
+            winner = self.__judge_winner()
+            if winner == 1:
+                self._send_msg(to, f"🎉 玩家1 {self.game_players[0].name} 胜利！")
+                self.over_game(message="", game_states=game_states)
+            elif winner == 2:
+                self._send_msg(to, f"🎉 玩家2 {self.game_players[1].name} 胜利！")
+                self.over_game(message="", game_states=game_states)
+            elif winner == 0:
+                self._send_msg(to, "🤝 平局！")
+                self.over_game(message="", game_states=game_states)
+        except Exception as e:
+            logger.error(f"游戏回合出现异常：{str(e)}")
+            raise
 
     @override
     def over(self, message, game_states, to):

@@ -229,8 +229,8 @@ class Game(ABC):
     def play_game(self, player: Person, message: str, game_states: GameStates, to: SendTo):
         try:
             self.play(player, message, game_states, to)
-        except Exception:
-            logger.error("游戏回合出现异常！")
+        except Exception as e:
+            logger.error(f"游戏回合出现异常：{str(e)}")
         else:
             self.round += 1
             # 下一个玩家
