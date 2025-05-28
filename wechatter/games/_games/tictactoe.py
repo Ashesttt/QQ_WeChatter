@@ -72,13 +72,15 @@ class Tictactoe(Game):
                 self._send_msg(to, "⚠️ 请按照 x,y 或者 x y 的格式输入坐标！")
                 raise ValueError("坐标格式错误")
 
-            if self.current_player_index != self.game_players.index(player):
+            # 修改玩家检查逻辑，使用ID进行比较
+            current_player = self.game_players[self.current_player_index]
+            if current_player.id != player.id:
                 logger.info(
-                    f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
+                    f"⚠️ 不是你的回合，当前回合玩家为 {current_player.name}！"
                 )
                 self._send_msg(
                     to,
-                    f"⚠️ 不是你的回合，当前回合玩家为 {self.game_players[self.current_player_index].name}！"
+                    f"⚠️ 不是你的回合，当前回合玩家为 {current_player.name}！"
                 )
                 raise ValueError("不是当前玩家的回合")
 
