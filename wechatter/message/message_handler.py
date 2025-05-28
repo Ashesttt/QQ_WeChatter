@@ -1,5 +1,6 @@
 import re
 from typing import Dict
+import inspect
 
 from loguru import logger
 
@@ -202,20 +203,32 @@ async def _execute_command(cmd_dict: Dict, to: SendTo, message_obj: Message):
     :param to: 发送对象
     :param message_obj: 消息对象
     """
-
     cmd_handler = cmd_dict["handler"]
     if cmd_handler is not None:
         if cmd_dict["param_count"] == 2:
-            cmd_handler(
-                to=to,
-                message=cmd_dict["args"],
-            )
+            if inspect.iscoroutinefunction(cmd_handler):
+                await cmd_handler(
+                    to=to,
+                    message=cmd_dict["args"],
+                )
+            else:
+                cmd_handler(
+                    to=to,
+                    message=cmd_dict["args"],
+                )
         elif cmd_dict["param_count"] == 3:
-            cmd_handler(
-                to=to,
-                message=cmd_dict["args"],
-                message_obj=message_obj,
-            )
+            if inspect.iscoroutinefunction(cmd_handler):
+                await cmd_handler(
+                    to=to,
+                    message=cmd_dict["args"],
+                    message_obj=message_obj,
+                )
+            else:
+                cmd_handler(
+                    to=to,
+                    message=cmd_dict["args"],
+                    message_obj=message_obj,
+                )
     else:
         logger.error("该命令未实现")
 
