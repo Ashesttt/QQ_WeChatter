@@ -206,12 +206,12 @@ async def _execute_command(cmd_dict: Dict, to: SendTo, message_obj: Message):
     cmd_handler = cmd_dict["handler"]
     if cmd_handler is not None:
         if cmd_dict["param_count"] == 2:
-            await cmd_handler(
+            cmd_handler(
                 to=to,
                 message=cmd_dict["args"],
             )
         elif cmd_dict["param_count"] == 3:
-            await cmd_handler(
+            cmd_handler(
                 to=to,
                 message=cmd_dict["args"],
                 message_obj=message_obj,
