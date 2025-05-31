@@ -1,0 +1,17 @@
+python-multipart==0.0.9
+requests==2.31.0
+fastapi~=0.115.12
+uvicorn==0.25.0
+langid==1.1.6
+BeautifulSoup4==4.11.2
+qrcode==7.4.2
+Pillow~=10.2.0
+apscheduler==3.10.4
+loguru==0.7.2
+tenacity==8.2.3
+pydantic~=2.9.0
+sqlalchemy==2.0.25
+PyYAML~=6.0
+qq-botpy==1.2.1
+openai~=1.82.0
+mcp~=1.9.0
