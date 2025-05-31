@@ -1,5 +1,5 @@
-FROM python:3.9-alpine3.18 as build
-LABEL authors="Cassius0924"
+FROM python:3.12-alpine3.21 as build
+LABEL authors="Ashesttt"
 
 WORKDIR /wechatter
 
