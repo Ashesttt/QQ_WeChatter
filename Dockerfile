@@ -11,7 +11,30 @@ RUN playwright install chromium
 # 第二阶段：最终运行阶段
 FROM python:3.12-slim-bullseye
 LABEL authors="Ashesttt"
-
+# 安装 Chromium 依赖
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libgobject-2.0-0 \
+    libnss3 \
+    libnssutil3 \
+    libnspr4 \
+    libdbus-1-3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libgio2.0-0 \
+    libexpat1 \
+    libatspi0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libxcb1 \
+    libxkbcommon0 \
+    libasound2 \
+    
 WORKDIR /wechatter
 # 从构建阶段复制安装的依赖
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
