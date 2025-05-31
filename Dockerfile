@@ -1,7 +1,7 @@
 # 第一阶段：构建阶段
 FROM python:3.12-bullseye AS builder
 WORKDIR /app
-COPY requirements.txt .
+COPY requirements_docker.txt .
 # 为 pip 配置镜像源
 RUN pip install --no-cache-dir -r requirements_docker.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/ --trusted-host pypi.tuna.tsinghua.edu.cn
 
