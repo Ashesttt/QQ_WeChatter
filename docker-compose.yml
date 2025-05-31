@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   wechatter:
-    image: crpi-njrnyyg1qc99zqup.cn-zhangjiakou.personal.cr.aliyuncs.com/jerryestt/docker
+    image: crpi-njrnyyg1qc99zqup.cn-zhangjiakou.personal.cr.aliyuncs.com/jerryestt/docker:v1.0.0
     container_name: wechatter
     ports:
       - "4000:4000"
