@@ -15,3 +15,4 @@ PyYAML~=6.0
 qq-botpy==1.2.1
 playwright~=1.52.0
 openai~=1.82.0
+mcp~=1.9.0
