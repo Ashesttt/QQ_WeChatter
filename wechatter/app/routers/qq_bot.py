@@ -21,6 +21,7 @@ from wechatter.message import MessageHandler
 from wechatter.models.wechat import Message, MessageType
 from wechatter.models.wechat.person import Person, Gender
 from wechatter.sender import notifier
+from wechatter.utils import get_abs_path
 from wechatter.utils.time import get_current_timestamp, get_current_datetime2
 
 # 传入命令字典，构造消息处理器
@@ -754,7 +755,10 @@ def create_qq_bot():
         intents = botpy.Intents.all()
     
     # 创建客户端
-    client = QQBot(intents=intents)
+    client = QQBot(
+        intents=intents,
+        bot_log=None  # 禁用bot日志
+    )
     qq_bot_instance = client    
     return client
 
