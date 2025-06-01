@@ -16,7 +16,7 @@ from wechatter.utils import get_abs_path, load_json, save_json
     keys=["待办事项", "待办", "todo"],
     desc="获取待办事项。",
 )
-def todo_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def todo_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     # 判断是查询还是添加
     if message == "":
         # 获取待办事项

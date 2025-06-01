@@ -15,7 +15,7 @@ COMMAND_NAME = "quoted"
     keys=["引用", "quoted"],
     desc="引用任意可引用消息。",
 )
-def quoted_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def quoted_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     """
     直接通过 quotable_id 和参数引用任意可引用消息
     """

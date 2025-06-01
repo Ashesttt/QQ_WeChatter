@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import QuotedResponse, SendTo
 from wechatter.sender import sender
@@ -19,7 +20,7 @@ COMMAND_NAME = "github-trending"
     keys=["github趋势", "github-trending"],
     desc="获取 GitHub 趋势。",
 )
-def github_trending_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def github_trending_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_github_trending_str()
     except Exception as e:
@@ -145,3 +146,20 @@ def _generate_github_trending_quoted_response(gt_list: List) -> str:
             search_api % (trending["author"], trending["repo"])
         )
     return json.dumps(result)
+
+@mcp_server.tool(
+    name="get_github_trending",
+    description="获取GitHub趋势。",
+)
+async def get_github_trending():
+    """
+    获取GitHub趋势（排行榜）
+    :return: 返回GitHub趋势
+    """
+    try:
+        result, _ = get_github_trending_str()
+        return result
+    except Exception as e:
+        error_message = f"获取GitHub趋势失败，错误信息: {str(e)}"
+        logger.error(error_message)
+        return error_message

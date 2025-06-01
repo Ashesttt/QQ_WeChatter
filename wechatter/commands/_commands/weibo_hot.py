@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import QuotedResponse, SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_request_json, url_encode
@@ -16,7 +17,7 @@ COMMAND_NAME = "weibo-hot"
     keys=["微博热搜", "weibo-hot"],
     desc="获取微博热搜。",
 )
-def weibo_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def weibo_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_weibo_hot_str()
     except Exception as e:
@@ -92,3 +93,20 @@ def _generate_weibo_hot_quoted_response(hot_list: List) -> str:
         if keyword:
             result[str(i + 1)] = search_url % url_encode(keyword)
     return json.dumps(result)
+
+@mcp_server.tool(
+    name="get_weibo_hot",
+    description="获取微博热搜。",
+)
+async def get_weibo_hot():
+    """
+    获取微博热搜
+    :return: 返回微博热搜
+    """
+    try:
+        result, _ = get_weibo_hot_str()
+        return result
+    except Exception as e:
+        error_message = f"获取微博热搜失败，错误信息：{str(e)}"
+        logger.error(error_message)
+        return error_message

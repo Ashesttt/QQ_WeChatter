@@ -457,7 +457,7 @@ class QQBot(botpy.Client):
         # DEBUG
         logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
-        message_handler.handle_message(message_obj)
+        await message_handler.handle_message(message_obj)
 
     async def on_group_at_message_create(self, message: GroupMessage):
         """
@@ -548,7 +548,7 @@ class QQBot(botpy.Client):
         # DEBUG
         logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
-        message_handler.handle_message(message_obj)
+        await message_handler.handle_message(message_obj)
 
         # 处理阻塞队列中的消息
         if hasattr(self, '_blocking_group_queue') and self._blocking_group_queue:
@@ -657,7 +657,7 @@ class QQBot(botpy.Client):
         # DEBUG
         logger.debug(str(message_obj))
         # 用户发来的消息均送给消息解析器处理
-        message_handler.handle_message(message_obj)
+        await message_handler.handle_message(message_obj)
 
         # 处理阻塞队列中的消息
         if hasattr(self, '_blocking_c2c_queue') and self._blocking_c2c_queue:
@@ -754,7 +754,10 @@ def create_qq_bot():
         intents = botpy.Intents.all()
     
     # 创建客户端
-    client = QQBot(intents=intents)
+    client = QQBot(
+        intents=intents,
+        bot_log=None  # 禁用bot日志
+    )
     qq_bot_instance = client    
     return client
 

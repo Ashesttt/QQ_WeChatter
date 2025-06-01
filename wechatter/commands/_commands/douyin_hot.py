@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import QuotedResponse, SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_request_json, url_encode
@@ -16,7 +17,7 @@ COMMAND_NAME = "douyin-hot"
     keys=["抖音热搜", "douyin-hot"],
     desc="获取抖音热搜。",
 )
-def douyin_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def douyin_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_douyin_hot_str()
     except Exception as e:
@@ -92,3 +93,20 @@ def _generate_douyin_hot_quoted_response(hot_list: List) -> str:
         if keyword:
             hot_url_dict[str(i + 1)] = url_encode(search_api % keyword)
     return json.dumps(hot_url_dict)
+
+@mcp_server.tool(
+    name="get_douyin_hot",
+    description="获取抖音热搜榜，返回热搜列表"
+)
+async def get_douyin_hot():
+    """
+    获取抖音热搜
+    :return: 返回抖音热搜列表
+    """
+    try:
+        result, _ = get_douyin_hot_str()
+        return result
+    except Exception as e:
+        error_message = f"获取抖音热搜失败，错误信息: {str(e)}"
+        logger.error(error_message)
+        return error_message

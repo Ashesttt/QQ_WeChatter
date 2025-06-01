@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, Union
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import QuotedResponse, SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_request_json
@@ -16,7 +17,7 @@ COMMAND_NAME = "zhihu-hot"
     keys=["知乎热搜", "zhihu-hot"],
     desc="获取知乎热搜。",
 )
-def zhihu_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def zhihu_hot_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result, q_response = get_zhihu_hot_str()
     except Exception as e:
@@ -91,3 +92,20 @@ def _generate_zhihu_hot_quoted_response(hot_list: List) -> str:
         )
 
     return json.dumps(hot_url_dict)
+
+@mcp_server.tool(
+    name="get_zhihu_hot",
+    description="获取知乎热搜。",
+)
+async def get_zhihu_hot():
+    """
+    获取知乎热搜
+    :return: 返回知乎热搜
+    """
+    try:
+        result, _ = get_zhihu_hot_str()
+        return result
+    except Exception as e:
+        error_message = f"获取知乎热搜失败，错误信息：{str(e)}"
+        logger.error(error_message)
+        return error_message

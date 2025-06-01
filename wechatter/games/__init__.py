@@ -63,7 +63,7 @@ def _execute_game(
     if not message_obj.is_group:
         logger.info("目前只支持群中游戏！")
         message = "目前只支持群中游戏！"
-        sender.send_msg(message_obj.sender_name, message, is_group=message_obj.is_group)
+        sender.send_msg(to, message)
         return
 
     # 从数据库中获取未结束的游戏的游戏状态
@@ -81,7 +81,7 @@ def _execute_game(
                 "若要创建新游戏，请使用 over 命令结束当前游戏。"
             )
             sender.send_msg(
-                message_obj.sender_name, message, is_group=message_obj.is_group
+                to, message
             )
             return
 
@@ -93,24 +93,24 @@ def _execute_game(
             game_players=UniqueList([to.person]),
             game_host_group=group,
         )
-        game.create_game()
+        game.create_game(to)
         return
 
     if game_states is None:
         message = "当前没有游戏在进行中！"
-        sender.send_msg(message_obj.sender_name, message, is_group=message_obj.is_group)
+        sender.send_msg(to, message)
         return
 
     game_class = game_class_name_dict[game_states.game_class_name]
     game = game_class.from_dict(game_states.states)
     if cmd == "start":
-        game.start_game(player=to.person, game_states=game_states)
+        game.start_game(player=to.person, game_states=game_states, to=to)
     elif cmd == "join":
-        game.join_game(player=to.person, message=message, game_states=game_states)
+        game.join_game(player=to.person, message=message, game_states=game_states, to=to)
     elif cmd == "play":
-        game.play_game(player=to.person, message=message, game_states=game_states)
+        game.play_game(player=to.person, message=message, game_states=game_states, to=to)
     elif cmd == "over":
-        game.over_game(message=message, game_states=game_states)
+        game.over_game(message=message, game_states=game_states, to=to)
 
 
 def _register_game_basic_command():

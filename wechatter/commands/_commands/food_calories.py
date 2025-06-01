@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Any, Coroutine
 from urllib.parse import quote
 import re
 
@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
@@ -18,7 +19,7 @@ from wechatter.utils import get_request
     keys=["食物热量", "food-calories", "热量", "calories", "卡路里"],
     desc="获取食物热量信息（数据来源：喵咕美食）。",
 )
-def food_calories_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def food_calories_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result = get_food_calories_str(message)
     except Exception as e:
@@ -142,3 +143,22 @@ def _parse_detail_page(response: requests.Response) -> Dict:
         raise ValueError("食物信息不完整")
 
     return nutrition
+
+@mcp_server.tool(
+    name="get_food_calories",
+    description="获取食物热量信息（数据来源：喵咕美食）。",
+)
+async def get_food_calories(message: str) -> Coroutine[Any, Any, str] | str:
+    """
+    获取食物相关信息，包括食物的分类，热量，碳水，蛋白质，脂肪
+    :param message: 食物名称
+    :return: 食物相关信息
+    """
+    try:
+        result = get_food_calories_str(message)
+        return result
+    except Exception as e:
+        error_message = f"获取食物热量失败，错误信息：{str(e)}"
+        logger.error(error_message)
+        return error_message
+

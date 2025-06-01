@@ -15,7 +15,7 @@ from wechatter.utils.time import get_current_ymd
     keys=["人民日报", "people", "people-daily"],
     desc="获取人民日报。",
 )
-def people_daily_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def people_daily_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     """
     发送人民日报pdf
     """

@@ -3,6 +3,7 @@ from typing import Dict, Union
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_request_json
@@ -14,7 +15,7 @@ from wechatter.utils.time import get_current_bdy, get_yesterday_bdy
     keys=["每日环球视野", "idaily"],
     desc="获取每日环球视野。",
 )
-def idaily_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def idaily_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     # 获取每日环球视野
     try:
         result = get_idaily_str()
@@ -72,6 +73,23 @@ def _generate_idaily_message(tih_list: dict) -> str:
 
     idaily_str.extend(content_list)
     return "\n".join(idaily_str)
+
+@mcp_server.tool(
+    name="get_idaily_str",
+    description="获取每日环球视野。",
+)
+async def get_idaily():
+    """
+    获取每日环球视野（idaily)
+    :return: 返回每日环球视野
+    """
+    try:
+        result = get_idaily_str()
+        return result
+    except Exception as e:
+        error_message = f"获取每日环球视野失败，错误信息：{str(e)}"
+        logger.error(error_message)
+        return error_message
 
 
 # def _generate_idaily_message(tih_list: dict) -> str:

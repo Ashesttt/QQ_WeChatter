@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
@@ -16,7 +17,7 @@ from wechatter.utils import get_abs_path, get_request, load_json
     keys=["汽油", "gasoline-price", "汽油价格", "中石化"],
     desc="获取汽油价格。",
 )
-def gasoline_price_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def gasoline_price_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result = get_gasoline_price_str(message)
     except Exception as e:
@@ -96,3 +97,20 @@ def _get_city_id(city_name: str) -> str:
 
 def _generate_gasoline_price_message(gasoline_price: str, message: str) -> str:
     return f"✨{message}石化92汽油指导价✨\n{gasoline_price}\n\n油价数据仅供参考,实际在售油价可能有小幅偏差。"
+
+@mcp_server.tool(
+    name="get_gasoline_price",
+    description="获取汽油价格。",
+)
+async def get_gasoline_price(city_name: str) -> str:
+    """
+    获取城市的汽油价格
+    :param city_name: 城市名
+    :return: 汽油价格
+    """
+    try:
+        result = get_gasoline_price_str(city_name)
+        return result
+    except Exception as e:
+        error_message = f"获取汽油价格失败，错误信息：{str(e)}"
+        logger.error(error_message)
