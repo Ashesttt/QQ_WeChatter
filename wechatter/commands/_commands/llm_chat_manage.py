@@ -12,7 +12,7 @@ class Chat(BaseChat):
         super().__init__(
             model=model,
             api_url=api_url,
-            token="Bearer " + token
+            token=token
         )
 
 
