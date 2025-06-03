@@ -386,9 +386,14 @@ class QQBot(botpy.Client):
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    logger.info(f"收到图片：{attachment}")
-                    # 图片处理逻辑
-                    _type = MessageType.file
+                    logger.info(f"收到图片：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "file":
+                    logger.info(f"收到文件：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "voice":
+                    logger.info(f"收到语音：{attachment.filename}，attachment：{attachment}")
+                _type = MessageType.file
+
+                    
         # 构建source
         # message.author.id没有用，message.guild_id才有用，用作qq频道私信fa发送信息的的guild_id
         author_dict = json.loads(json.dumps({"id": message.guild_id, "username": message.author.username, "avatar": message.author.avatar}))
@@ -445,10 +450,11 @@ class QQBot(botpy.Client):
         message_obj = Message.from_api_direct_message(
             type=_type,
             qq_directmessage=message,
-            content=message.content,
+            content=message.content or ".",
             source=source,
             is_mentioned=is_mentioned,
             is_from_self=is_from_self,
+            attachments=message.attachments,
         )
         # 向用户表中添加该用户
         add_person(message_obj.person)
@@ -475,18 +481,19 @@ class QQBot(botpy.Client):
             'event_id': 'GROUP_AT_MESSAGE_CREATE:hgda5vcocxiqddr28qjydk1wdgg79js8xq7yjlrq8ypuv957wseidnfe0ixfc6s'
         }
         """
-        logger.info(f"收到私信: {message.content}")
-        # 这个方法返回的content前面多了空格，所以需要去掉
-        message.content = message.content.strip()
+        logger.info(f"收到私信:{message.content}")
         # 适配wechatter的消息对象
         _type = MessageType.text
         if message.attachments:
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    logger.info(f"收到图片：{attachment}")
-                    # 图片处理逻辑
-                    _type = MessageType.file
+                    logger.info(f"收到图片：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "file":
+                    logger.info(f"收到文件：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "voice":
+                    logger.info(f"收到语音：{attachment.filename}，attachment：{attachment}")
+                _type = MessageType.file
         # 构建source
         author_dict = json.loads(json.dumps({"member_openid": message.author.member_openid}))
 
@@ -534,10 +541,11 @@ class QQBot(botpy.Client):
         message_obj = Message.from_api_group_at_message(
             type=_type,
             qq_groupmessage=message,
-            content=message.content,
+            content=message.content or ".",
             source=source,
             is_mentioned=is_mentioned,
             is_from_self=is_from_self,
+            attachments=message.attachments,
         )
         # 向群组表中添加该群组
         add_group(message_obj.group)
@@ -587,9 +595,12 @@ class QQBot(botpy.Client):
             for attachment in message.attachments:
                 # 检查是否为图片
                 if attachment.content_type and attachment.content_type.startswith('image/'):
-                    logger.info(f"收到图片：{attachment}")
-                    # 图片处理逻辑
-                    _type = MessageType.file
+                    logger.info(f"收到图片：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "file":
+                    logger.info(f"收到文件：{attachment.filename}，attachment：{attachment}")
+                if attachment.content_type and attachment.content_type == "voice":
+                    logger.info(f"收到语音：{attachment.filename}，attachment：{attachment}")
+                _type = MessageType.file
         # 构建source
         author_dict = json.loads(json.dumps({"id": message.author.user_openid}))
 
@@ -645,10 +656,11 @@ class QQBot(botpy.Client):
         message_obj = Message.from_api_c2c_message(
             type=_type,
             qq_c2cmessage=message,
-            content=message.content,
+            content=message.content or ".",
             source=source,
             is_mentioned=is_mentioned,
             is_from_self=is_from_self,
+            attachments=message.attachments,
         )
         # 向用户表中添加该用户
         add_person(message_obj.person)

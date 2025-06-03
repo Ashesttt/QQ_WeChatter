@@ -60,6 +60,7 @@ class Message(BaseModel):
     qq_groupmessage: GroupMessage = None
     qq_c2cmessage:  C2CMessage = None
     msg_id: Optional[str] = None
+    attachments: Optional[list] = None
 
     @classmethod
     def from_api_direct_message(
@@ -69,7 +70,8 @@ class Message(BaseModel):
             content: str,
             source: str,
             is_mentioned: str,
-            is_from_self: str = 0
+            is_from_self: str = 0,
+            attachments: Optional[list] = None
     ):
         """
         从API接口创建消息对象
@@ -79,6 +81,7 @@ class Message(BaseModel):
         :param source: 消息来源
         :param is_mentioned: 是否@机器人
         :param is_from_self: 是否是自己发送的消息
+        :param attachments: 消息附件列表
         :return: 消息对象
         """
         try:
@@ -158,7 +161,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content.replace("\u2005", " ", 1)
+        _content = content
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
@@ -175,6 +178,7 @@ class Message(BaseModel):
             is_from_self=_is_from_self,
             qq_directmessage=qq_directmessage,
             msg_id=msg_id,
+            attachments=attachments,
         )
 
     @classmethod
@@ -185,7 +189,8 @@ class Message(BaseModel):
             content: str,
             source: str,
             is_mentioned: str,
-            is_from_self: str = 0
+            is_from_self: str = 0,
+            attachments: Optional[list] = None
     ):
         """
         从API接口创建消息对象
@@ -195,6 +200,7 @@ class Message(BaseModel):
         :param source: 消息来源
         :param is_mentioned: 是否@机器人
         :param is_from_self: 是否是自己发送的消息
+        :param attachments: 消息附件列表
         :return: 消息对象
         """
         try:
@@ -272,7 +278,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content.replace("\u2005", " ", 1)
+        _content = content
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
@@ -288,6 +294,7 @@ class Message(BaseModel):
             is_mentioned=_is_mentioned,
             is_from_self=_is_from_self,
             qq_groupmessage=qq_groupmessage,
+            attachments=attachments,
         )
     @classmethod
     def from_api_c2c_message(
@@ -297,7 +304,8 @@ class Message(BaseModel):
             content: str,
             source: str,
             is_mentioned: str,
-            is_from_self: str = 0
+            is_from_self: str = 0,
+            attachments: Optional[list] = None
     ):
         """
         从API接口创建消息对象
@@ -307,6 +315,7 @@ class Message(BaseModel):
         :param source: 消息来源
         :param is_mentioned: 是否@机器人
         :param is_from_self: 是否是自己发送的消息
+        :param attachments: 消息附件列表
         :return: 消息对象
         """
         try:
@@ -384,7 +393,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content.replace("\u2005", " ", 1)
+        _content = content
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
@@ -400,6 +409,7 @@ class Message(BaseModel):
             is_mentioned=_is_mentioned,
             is_from_self=_is_from_self,
             qq_c2cmessage=qq_c2cmessage,
+            attachments=attachments,
         )
     @classmethod
     def from_api_msg(

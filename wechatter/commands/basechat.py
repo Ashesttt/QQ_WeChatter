@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import List, Union
 
+import requests
 from loguru import logger
 from openai import OpenAI
 
@@ -11,9 +12,9 @@ from wechatter.database import (
     make_db_session,
 )
 from wechatter.models.gpt import GptChatInfo
-from wechatter.models.wechat import Person, SendTo
+from wechatter.models.wechat import Person, SendTo, MessageType
 from wechatter.sender import sender
-from wechatter.utils import post_request_json
+from wechatter.utils import post_request_json, get_abs_path
 from wechatter.utils.time import get_current_date, get_current_week, get_current_time
 
 DEFAULT_TOPIC = "（对话进行中*）"
@@ -318,6 +319,57 @@ class BaseChat:
         :param is_save: 是否保存此轮对话记录
         :return: GPT 回复
         """
+        # 如果消息类型为文件，则先下载文件（可能为多个文件）
+        if message_obj.type == MessageType.file:
+            download_dir = get_abs_path(f"data/download_file/")
+            # 下载文件
+            for attachment in message_obj.attachments:
+                # 下载文件
+                file_name = attachment.filename
+                file_url = attachment.url
+                # 如果file_url没有请求头，则再file_url前面加上https://
+                if not file_url.startswith("https://"):
+                    file_url = "https://" + file_url
+                
+                # 提前设置文件路径
+                file_path = download_dir + file_name
+                print(f"file_path:{file_path}")
+                
+                try:
+                    # 首先尝试使用 requests 下载文件
+                    print(f"file_url:{file_url}")
+                    response = requests.get(file_url, stream=True)
+                    response.raise_for_status()
+                    
+                    # 保存文件
+                    with open(file_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                    
+                    logger.info(f"文件下载成功：{file_name}")
+                except Exception as e:
+                    logger.warning(f"使用 requests 下载失败，尝试使用 curl：{str(e)}")
+                    try:
+                        # 使用 curl 命令下载文件
+                        import subprocess
+                        curl_command = ['curl', '-L', '-o', file_path, file_url]
+                        logger.debug(f"执行 curl 命令: {' '.join(curl_command)}")
+                        result = subprocess.run(curl_command, capture_output=True, text=True)
+                        
+                        if result.returncode == 0:
+                            logger.info(f"使用 curl 下载成功：{file_name}")
+                            logger.debug(f"curl 连接详情:\n{result.stderr}")
+                        else:
+                            error_msg = f"curl 下载失败: {result.stderr}"
+                            logger.error(error_msg)
+                            raise ValueError(error_msg)
+                    except Exception as curl_error:
+                        error_msg = f"所有下载方法都失败：\n1. requests 错误: {str(e)}\n2. curl 错误: {str(curl_error)}"
+                        logger.error(error_msg)
+                        raise ValueError(error_msg)
+
+
         newconv = [{"role": "user", "content": message}]
         # headers = {
         #     "Authorization": self.token,
