@@ -9,6 +9,7 @@ from .url_codec import url_decode, url_encode
 from .url_joiner import join_urls
 from .threading_util import run_in_thread
 from .download_file import download_file
+from .encode_image import encode_image
 
 __all__ = [
     "load_json",
@@ -30,5 +31,6 @@ __all__ = [
     "UniqueListEncoder",
     "UniqueListDecoder",
     "run_in_thread",
-    "download_file"
+    "download_file",
+    "encode_image",
 ]

@@ -6,6 +6,7 @@ import requests
 from loguru import logger
 from openai import OpenAI
 
+from wechatter.config import config
 from wechatter.database import (
     GptChatInfo as DbGptChatInfo,
     GptChatMessage as DbGptChatMessage,
@@ -14,7 +15,7 @@ from wechatter.database import (
 from wechatter.models.gpt import GptChatInfo
 from wechatter.models.wechat import Person, SendTo, MessageType
 from wechatter.sender import sender
-from wechatter.utils import post_request_json, get_abs_path
+from wechatter.utils import post_request_json, get_abs_path, encode_image
 from wechatter.utils.download_file import download_file
 from wechatter.utils.time import get_current_date, get_current_week, get_current_time
 
@@ -320,23 +321,44 @@ class BaseChat:
         :param is_save: 是否保存此轮对话记录
         :return: GPT 回复
         """
-        # 如果消息类型为文件，则先下载文件（可能为多个文件）
-        if message_obj.type == MessageType.file:
-            download_dir = get_abs_path(f"data/download_file/")
-            # 下载文件
-            for attachment in message_obj.attachments:
-                try:
-                    file_path = download_file(
-                        file_name=attachment.filename,
-                        file_url=attachment.url,
-                        download_dir=download_dir
-                    )
-                    logger.info(f"文件下载成功：{file_path}")
-                except ValueError as e:
-                    logger.error(f"文件下载失败：{str(e)}")
-                    raise
-
-        newconv = [{"role": "user", "content": message}]
+        # 判断这个llm是否为multimodal
+        if chat_info.model in config["multimodal"]:
+            # 构建消息内容
+            content = [
+                {"type": "text", "text": message}
+            ]
+            # 如果消息类型为文件，则先下载文件（可能为多个文件）
+            if message_obj is not None and message_obj.type == MessageType.file:
+                download_dir = get_abs_path(f"data/download_file/")
+                # 下载文件
+                for attachment in message_obj.attachments:
+                    try:
+                        file_path = download_file(
+                            file_name=attachment.filename,
+                            file_url=attachment.url,
+                            download_dir=download_dir
+                        )
+    
+                        base64_image = encode_image(file_path)
+                        # 添加提示词，可以解决用户只发送一张图片，而不发送提示词的问题
+                        content.append({
+                            "type": "text",
+                            "text": "你是一个专业的图像分析AI。请开始分析或者描述图片。"
+                        })
+                        # 添加图片内容到消息中
+                        content.append({
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}" 
+                            }
+                        })
+                        logger.info(f"文件下载成功：{file_path}")
+                    except ValueError as e:
+                        logger.error(f"文件下载失败：{str(e)}")
+                        raise
+        else:
+            content = message
+            
         # headers = {
         #     "Authorization": self.token,
         #     "Content-Type": "application/json",
@@ -357,6 +379,13 @@ class BaseChat:
         # msg = r_json["choices"][0]["message"]
         # msg_content = msg.get("content", "调用服务失败")
 
+        newconv = [
+            {
+                "role": "user",
+                "content": content
+            }
+        ]
+        logger.debug(f"这是newconv:{newconv}")
         try:
             # 使用 OpenAI 客户端发送请求
             response = self.client.chat.completions.create(
@@ -364,7 +393,7 @@ class BaseChat:
                 messages=DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv,
             )
     
-            msg_content = response.choices[0].message.content        
+            msg_content = response.choices[0].message.content   
     
             if is_save:
                 newconv.append({"role": "assistant", "content": msg_content})
