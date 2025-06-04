@@ -5,7 +5,7 @@ uvicorn==0.25.0
 langid==1.1.6
 BeautifulSoup4==4.11.2
 qrcode==7.4.2
-Pillow~=10.2.0
+Pillow>=10.0.0
 apscheduler==3.10.4
 loguru==0.7.2
 tenacity==8.2.3
@@ -16,3 +16,7 @@ qq-botpy==1.2.1
 playwright~=1.52.0
 openai~=1.82.0
 mcp~=1.9.0
+PyPDF2
+python-docx
+pandas
+openpyxl

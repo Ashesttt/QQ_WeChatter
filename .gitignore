@@ -16,4 +16,4 @@ logs/
 assets/games/tictactoe/gaming_board.png
 /botpy.log
 botpy.log.*
-.venv/
+venv/

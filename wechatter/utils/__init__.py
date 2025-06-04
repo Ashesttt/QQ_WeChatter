@@ -10,6 +10,7 @@ from .url_joiner import join_urls
 from .threading_util import run_in_thread
 from .download_file import download_file
 from .encode_image import encode_image
+from .extract_text_from_file import extract_text_from_file
 
 __all__ = [
     "load_json",
@@ -33,4 +34,5 @@ __all__ = [
     "run_in_thread",
     "download_file",
     "encode_image",
+    "extract_text_from_file",
 ]

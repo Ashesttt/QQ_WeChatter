@@ -321,76 +321,97 @@ class BaseChat:
         :param is_save: 是否保存此轮对话记录
         :return: GPT 回复
         """
-        # 判断这个llm是否为multimodal
-        if chat_info.model in config["multimodal"]:
-            # 构建消息内容
-            content = [
-                {"type": "text", "text": message}
-            ]
-            # 如果消息类型为文件，则先下载文件（可能为多个文件）
-            if message_obj is not None and message_obj.type == MessageType.file:
-                download_dir = get_abs_path(f"data/download_file/")
-                # 下载文件
-                for attachment in message_obj.attachments:
-                    try:
-                        file_path = download_file(
-                            file_name=attachment.filename,
-                            file_url=attachment.url,
-                            download_dir=download_dir
-                        )
-    
-                        base64_image = encode_image(file_path)
-                        # 添加提示词，可以解决用户只发送一张图片，而不发送提示词的问题
-                        content.append({
-                            "type": "text",
-                            "text": "你是一个专业的图像分析AI。请开始分析或者描述图片。"
+        # 首先判断消息类型是否为文件
+        newconv = []
+        newconv_system = []
+        if message_obj is not None and message_obj.type == MessageType.file:
+            download_dir = get_abs_path(f"data/download_file/")
+            # 下载文件
+            for attachment in message_obj.attachments:
+                try:
+                    file_path = download_file(
+                        file_name=attachment.filename,
+                        file_url=attachment.url,
+                        download_dir=download_dir
+                    )
+                    logger.info(f"文件下载成功：{file_path}")
+                except ValueError as e:
+                    logger.error(f"文件下载失败：{str(e)}")
+                    raise
+
+                # 判断文件是什么类型，查看文件名的后缀名
+                file_type = attachment.filename.split(".")[-1]
+                print(f"file_type:{file_type}")
+                if file_type in ["jpg", "jpeg", "png", "gif", "bmp", "webp"]:
+                    # 图片类型，只有multimodal模型可以处理
+                    # 判断这个llm是否为multimodal
+                    if chat_info.model in config["multimodal"]:
+                        # 构建消息内容
+                        content = []
+                        newconv_system.append({
+                            "role": "system",
+                            "content": "你是一个专业的图像分析AI。请开始分析或者描述图片。"
                         })
+                        base64_image = encode_image(file_path)
                         # 添加图片内容到消息中
                         content.append({
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}" 
+                                "url": f"data:image/jpeg;base64,{base64_image}"
                             }
                         })
-                        logger.info(f"文件下载成功：{file_path}")
-                    except ValueError as e:
-                        logger.error(f"文件下载失败：{str(e)}")
-                        raise
-        else:
-            content = message
-            
-        # headers = {
-        #     "Authorization": self.token,
-        #     "Content-Type": "application/json",
-        # }
-        # # TODO:增加是否开启深度搜索
-        # #  https://www.xfyun.cn/doc/spark/HTTP%E8%B0%83%E7%94%A8%E6%96%87%E6%A1%A3.html#_3-%E8%AF%B7%E6%B1%82%E8%AF%B4%E6%98%8E
-        # json = {
-        #     "model": chat_info.model,
-        #     "messages": DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv,
-        # }
-        # 
-        # r_json = post_request_json(url=self.api_url, headers=headers, json=json, timeout=60)
-        # 
-        # # if "error" in r_json or "code" in r_json:
-        # if "error" in r_json in r_json:
-        #     raise ValueError(f"服务返回值错误: {r_json}")
-        # 
-        # msg = r_json["choices"][0]["message"]
-        # msg_content = msg.get("content", "调用服务失败")
+                        content.append({"type": "text", "text": message})
+                        newconv.append({
+                            "role": "user",
+                            "content": content
+                        })
+                    else:
+                        newconv.append({
+                            "role": "user",
+                            "content": f"我给你发送了后缀名为{file_type}的图片，但是你无法处理图片，请务必提醒我换一个模型，请基于前面的情况并回答：{message}"
+                        })
+                elif file_type in ["pdf", "docx", "xlsx"]:
+                    # 导入文件处理模块
+                    from wechatter.utils.extract_text_from_file import extract_text_from_file
+                
+                    try:
+                        # 提取文件文本内容
+                        file_text = extract_text_from_file(file_path)
+                
+                        # 构建消息内容
+                        content = f"以下是文件内容：\n{file_text}\n\n请分析以上内容并回答：{message}"
 
-        newconv = [
-            {
+                        newconv.append({
+                            "role": "user",
+                            "content": content
+                        })
+                    except Exception as e:
+                        logger.error(f"文件处理失败：{str(e)}")
+                        raise ValueError(f"文件处理失败：{str(e)}")
+                else:
+                    # 其他类型，直接发送消息
+                    newconv.append({
+                        "role": "user",
+                        "content": f"我给你发送了后缀名为{file_type}文件，但是你无法处理的文件，请基于前面的情况并回答：{message}"
+                    })
+
+        else:
+            newconv.append({
                 "role": "user",
-                "content": content
-            }
-        ]
+                "content": message
+            })
+
+        logger.debug(f"这是newconv_system:{newconv_system}")
         logger.debug(f"这是newconv:{newconv}")
         try:
             # 使用 OpenAI 客户端发送请求
+            if newconv_system:
+                _messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv_system + newconv
+            else:
+                _messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv
             response = self.client.chat.completions.create(
                 model=chat_info.model,
-                messages=DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv,
+                messages=_messages,
             )
     
             msg_content = response.choices[0].message.content   
