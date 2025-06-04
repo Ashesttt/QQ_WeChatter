@@ -1,8 +1,8 @@
 import enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
 from pydantic import BaseModel
-from typing_extensions import Union, List, Dict, Any
+from typing_extensions import Union, List, Dict
 
 if TYPE_CHECKING:
     from wechatter.models.gpt.gpt_chat_info import GptChatInfo
