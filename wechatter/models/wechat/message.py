@@ -161,7 +161,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content
+        _content = content.lstrip()
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
@@ -278,7 +278,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content
+        _content = content.lstrip()
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
@@ -393,7 +393,7 @@ class Message(BaseModel):
                 is_friend=to_payload.get("friend", False),
             )
 
-        _content = content
+        _content = content.lstrip()
         _is_mentioned = False
         if is_mentioned == "1":
             _is_mentioned = True
