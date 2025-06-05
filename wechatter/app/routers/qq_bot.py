@@ -156,6 +156,8 @@ class QQBot(botpy.Client):
                 last_group_msg_id = msg_id
                 last_group_msg_time = _current_time
                 last_group_msg_seq = 1
+                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
+                logger.critical(f"这是last_group_msg_seq:{last_group_msg_seq}")
             # 如果msg_id为空，代表这个消息任务是主动发送的，但由于群发和qq私信不能主动发送信息。只能"蹭"别的信息的msg_id。
             # 检查上一条消息ID是否在有效期内，如果在有效期内，则使用上一条消息ID
             elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
@@ -167,15 +169,19 @@ class QQBot(botpy.Client):
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里有新消息才能激活发送。"
                 msg_id = last_group_msg_id
                 last_group_msg_seq += 1
+                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
+                logger.critical(f"这是last_group_msg_seq:{last_group_msg_seq}")
             # 如果上一条消息ID没有（机器人启动之后第一次的主动发信息）或者上一条消息ID已过期，那么把这个消息队列任务添加到阻塞消息队列中
             else:
                 current_time = get_current_datetime2()
                 modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                 qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
                 logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_group_queue)，信息是：{modified_content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
+                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
+                logger.critical(f"这是last_group_msg_seq:{last_group_msg_seq}")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
-            
 
+            
             try:
                 params = {
                     "group_openid": group_openid,

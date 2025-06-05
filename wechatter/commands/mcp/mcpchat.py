@@ -105,7 +105,7 @@ class MCPChat:
             # 如果没有对话记录，则创建新对话
             sender.send_msg(to, f"正在调用 {command_name} 进行对话，LLM模型为 {model}...")
             if chat_info is None:
-                chat_info = self.create_chat(person, model)
+                chat_info = await self.create_chat(person, model)
                 logger.info("无历史对话记录，创建新对话成功")
                 sender.send_msg(to, "无历史对话记录，创建新对话成功")
             await self._async_chat(chat_info, message, message_obj, to)
