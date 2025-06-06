@@ -67,19 +67,63 @@ class QQBot(botpy.Client):
     async def _process_message_queue(self):
         """处理所有消息队列的异步任务"""
         import asyncio
+        from collections import OrderedDict
+        from time import time
 
-        # 使用字典来存储每个msg_id对应的msg_seq
-        msg_seq_map = {}
+        class MessageSeqManager:
+            def __init__(self, expiry_time=300):
+                self.msg_seq_map = OrderedDict()  # 使用OrderedDict来维护插入顺序
+                self.msg_time_map = {}  # 记录每个msg_id的最后使用时间
+                self.expiry_time = expiry_time
+                self.last_cleanup_time = time()
+                self.cleanup_interval = 60  # 每60秒检查一次过期消息
+
+            def get_seq(self, msg_id):
+                current_time = time()
+                # 检查是否需要清理过期消息
+                if current_time - self.last_cleanup_time > self.cleanup_interval:
+                    self._cleanup_expired()
+                    self.last_cleanup_time = current_time
+
+                # 如果msg_id不存在，初始化为1
+                if msg_id not in self.msg_seq_map:
+                    self.msg_seq_map[msg_id] = 1
+                    self.msg_time_map[msg_id] = current_time
+                    return 1
+
+                # 更新最后使用时间
+                self.msg_time_map[msg_id] = current_time
+                # 获取并递增seq
+                seq = self.msg_seq_map[msg_id] + 1
+                self.msg_seq_map[msg_id] = seq
+                return seq
+
+            def _cleanup_expired(self):
+                current_time = time()
+                # 创建需要删除的msg_id列表
+                expired_ids = [
+                    msg_id for msg_id, last_time in self.msg_time_map.items()
+                    if current_time - last_time > self.expiry_time
+                ]
+                # 删除过期的msg_id
+                for msg_id in expired_ids:
+                    del self.msg_seq_map[msg_id]
+                    del self.msg_time_map[msg_id]
+
+            def get_current_state(self):
+                return {
+                    'msg_seq_map': dict(self.msg_seq_map),
+                    'msg_time_map': self.msg_time_map
+                }
+
+        # 创建消息序列管理器实例
+        seq_manager = MessageSeqManager(expiry_time=300)  # 5分钟过期
         last_group_msg_id = ""
-        last_group_msg_time = 0  # 记录最后一条群消息的时间戳
-    
-        last_c2c_msg_id = ""
-        last_c2c_msg_time = 0  # 记录最后一条私聊消息的时间戳
+        last_group_msg_time = 0
         
-        # 定义msg_id有效期(秒)
-        MSG_ID_EXPIRY = 300  # 5分钟
-    
-        # 定义各队列的消息发送处理函数
+        last_c2c_msg_id = ""
+        last_c2c_msg_time = 0
+
         async def process_direct_message(msg_data):
             post_dms = ""
             # 参数兼容处理
@@ -137,34 +181,27 @@ class QQBot(botpy.Client):
         async def process_group_at_message(msg_data):
             nonlocal last_group_msg_id, last_group_msg_time
             post_group_message = ""
-            # 实现群聊@消息发送逻辑
             # 参数兼容处理
             if len(msg_data) == 5:
                 content, group_openid, msg_id, group, is_image = msg_data
                 retry_count = 0
             else:
                 content, group_openid, msg_id, group, is_image, retry_count = msg_data
-            """
-                由于post_group_message和post_c2c_message方法如果想要多次回复一条信息，需要使用msg_seq（相同的 msg_id + msg_seq 重复发送会失败），
-                因此，先记录下这次的msg_id为last_group_msg_id，然后下次消息队列又来消息时，如果msg_id与last_group_msg_id相同，
-                则将msg_seq+1，然后发送。
-            """
+                
             # 获取当前时间戳
             _current_time = get_current_timestamp()
             
             # 如果收到新消息(msg_id不为None)，而且msg_id与上次的msg_id不同，则发送消息
-            if msg_id is not None and msg_id != last_group_msg_id and msg_id not in msg_seq_map.keys():
-                # 如果是主动发信息，而且msg_id与上次的msg_id不同，而且msg_id不在msg_seq_map中，则更新last_group_msg_id和last_group_msg_time
+            if msg_id is not None and msg_id != last_group_msg_id:
                 last_group_msg_id = msg_id
                 last_group_msg_time = _current_time
-                # 为新msg_id初始化msg_seq
-                msg_seq_map[msg_id] = 1
-                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
-                logger.critical(f"这是msg_seq_map:{msg_seq_map}")
-            # 如果msg_id为空，代表这个消息任务是主动发送的，但由于群发和qq私信不能主动发送信息。只能"蹭"别的信息的msg_id。
-            # 检查上一条消息ID是否在有效期内，如果在有效期内，则使用上一条消息ID
-            elif last_group_msg_id and (_current_time - last_group_msg_time < MSG_ID_EXPIRY):
-                if msg_seq_map.get(last_group_msg_id, 0) >= 5:
+                # 获取新的seq
+                msg_seq = seq_manager.get_seq(msg_id)
+            # 如果msg_id为空，代表这个消息任务是主动发送的
+            elif last_group_msg_id and (_current_time - last_group_msg_time < 300):
+                # 获取当前msg_id的seq
+                msg_seq = seq_manager.get_seq(last_group_msg_id)
+                if msg_seq > 5:
                     current_time = get_current_datetime2()
                     modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                     qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
@@ -172,26 +209,19 @@ class QQBot(botpy.Client):
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里有新消息才能激活发送。"
                 
                 msg_id = last_group_msg_id
-                # 获取并递增当前msg_id对应的msg_seq
-                msg_seq = msg_seq_map.get(msg_id, 0) + 1
-                msg_seq_map[msg_id] = msg_seq
-                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
-                logger.critical(f"这是msg_seq_map:{msg_seq_map}")
-                # 如果上一条消息ID没有（机器人启动之后第一次的主动发信息）或者上一条消息ID已过期，那么把这个消息队列任务添加到阻塞消息队列中
             else:
                 current_time = get_current_datetime2()
                 modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                 qq_bot_instance._blocking_group_queue.append((modified_content, group_openid, msg_id, group, is_image))
                 logger.warning(f"QQ消息已加入阻塞消息队列(_blocking_group_queue)，信息是：{modified_content}，group_openid：{group_openid}，msg_id：{msg_id}，group：{group}，是否为图片：{is_image}。")
-                logger.critical(f"这是last_group_msg_id:{last_group_msg_id}")
-                logger.critical(f"这是msg_seq_map:{msg_seq_map}")
+                logger.critical(f"这是msg_seq_map状态:{seq_manager.get_current_state()}")
                 return f"信息已加入阻塞队列，请耐心等待发送完成，需要群里@机器人，或者私聊机器人，即可发送。"
 
             try:
                 params = {
                     "group_openid": group_openid,
                     "msg_id": str(last_group_msg_id),
-                    "msg_seq": msg_seq_map[last_group_msg_id]  # 使用当前msg_id对应的msg_seq
+                    "msg_seq": msg_seq
                 }
                 if is_image is True:
                     uploadMedia = await self.api.post_group_file(
@@ -249,14 +279,14 @@ class QQBot(botpy.Client):
             # 获取当前时间戳
             _current_time = get_current_timestamp()
             # 如果收到新消息(msg_id不为None)，而且msg_id与上次的msg_id不同，则发送消息，更新最后消息ID和时间
-            if msg_id is not None and msg_id != last_c2c_msg_id and msg_id not in msg_seq_map.keys():
+            if msg_id is not None and msg_id != last_c2c_msg_id:
                 last_c2c_msg_id = msg_id
                 last_c2c_msg_time = _current_time
                 # 为新msg_id初始化msg_seq
-                msg_seq_map[msg_id] = 1
+                msg_seq = seq_manager.get_seq(msg_id)
             # 如果msg_id为空，代表这个消息任务是主动发送的，检查上一条消息ID是否在有效期内
-            elif last_c2c_msg_id and (_current_time - last_c2c_msg_time < MSG_ID_EXPIRY):
-                if msg_seq_map.get(last_c2c_msg_id, 0) >= 5:
+            elif last_c2c_msg_id and (_current_time - last_c2c_msg_time < 300):
+                if seq_manager.get_seq(last_c2c_msg_id) >= 5:
                     current_time = get_current_datetime2()
                     modified_content = f"{content}\n\n⚠️ 注意：此消息非实时发送，实际发生的时间为：\n⌚️ {current_time}"
                     qq_bot_instance._blocking_c2c_queue.append((modified_content, user_openid, msg_id, is_image))
@@ -264,8 +294,7 @@ class QQBot(botpy.Client):
                     return f"信息已加入阻塞队列，请耐心等待发送完成，需要有新消息才能激活发送。"
                 msg_id = last_c2c_msg_id
                 # 获取并递增当前msg_id对应的msg_seq
-                msg_seq = msg_seq_map.get(msg_id, 0) + 1
-                msg_seq_map[msg_id] = msg_seq
+                msg_seq = seq_manager.get_seq(msg_id)
             # 如果上一条消息ID没有或已过期，将消息添加到阻塞队列
             else:
                 current_time = get_current_datetime2()
@@ -278,7 +307,7 @@ class QQBot(botpy.Client):
                 params = {
                     "openid": user_openid,
                     "msg_id": str(last_c2c_msg_id),
-                    "msg_seq": msg_seq_map[last_c2c_msg_id]  # 使用当前msg_id对应的msg_seq
+                    "msg_seq": msg_seq
                 }
                 if is_image is True:
                     uploadMedia = await self.api.post_c2c_file(
@@ -795,7 +824,7 @@ def desensitize_message(content):
     url_pattern = r'https?://[^\s]+'
     content = re.sub(url_pattern, '[链接已隐藏]', content)
     # 匹配所有域名（如 example.com、abc.xyz、mail.example.co.uk）
-    # 只要有“点”且后面是2-10位字母（常见顶级域名长度）
+    # 只要有"点"且后面是2-10位字母（常见顶级域名长度）
     domain_pattern = r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}\b'
     content = re.sub(domain_pattern, '[域名已隐藏]', content)
     return content
