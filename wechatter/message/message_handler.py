@@ -1,12 +1,13 @@
 import re
 from typing import Dict
 import inspect
+from datetime import datetime
 
 from loguru import logger
 
 from wechatter.bot import BotInfo
 from wechatter.config import config
-from wechatter.database import QuotedResponse, make_db_session
+from wechatter.database import QuotedResponse, make_db_session, MessageStats, CommandStats
 from wechatter.message.message_forwarder import MessageForwarder
 from wechatter.models.wechat import Message, SendTo
 
@@ -156,6 +157,42 @@ class MessageHandler:
                 logger.info(f"默认触发GPT命令：{cmd_dict['command']}")
                 await _execute_command(cmd_dict, to, message_obj)
             logger.debug("该消息不是命令类型")
+
+        # 更新消息统计
+        with make_db_session() as session:
+            msg_stats = session.query(MessageStats).first()
+            if not msg_stats:
+                msg_stats = MessageStats(
+                    total_messages=0,
+                    command_messages=0,
+                    group_messages=0,
+                    private_messages=0,
+                    last_updated=datetime.now()
+                )
+                session.add(msg_stats)
+            
+            msg_stats.total_messages += 1
+            if message_obj.is_group:
+                msg_stats.group_messages += 1
+            else:
+                msg_stats.private_messages += 1
+            
+            if not cmd_dict["command"] == "None":
+                msg_stats.command_messages += 1
+                # 更新命令统计
+                cmd_stat = session.query(CommandStats).filter_by(command_name=cmd_dict["command"]).first()
+                if not cmd_stat:
+                    cmd_stat = CommandStats(
+                        command_name=cmd_dict["command"],
+                        use_count=0,
+                        last_used=datetime.now()
+                    )
+                    session.add(cmd_stat)
+                cmd_stat.use_count += 1
+                cmd_stat.last_used = datetime.now()
+            
+            msg_stats.last_updated = datetime.now()
+            session.commit()
 
     def __parse_command(self, content: str, is_mentioned: bool, is_group: bool) -> Dict:
         """

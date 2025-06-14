@@ -8,6 +8,7 @@ class BotInfo:
 
     id: str = ""
     name: str = ""
+    start_time: float = 0.0
 
     @staticmethod
     def update_from_source(source: str) -> None:
@@ -34,3 +35,8 @@ class BotInfo:
     def update_name(name: str) -> None:
         """更新机器人名称"""
         BotInfo.name = name
+
+    @staticmethod
+    def update_start_time(start_time: float) -> None:
+        """更新机器人启动时间"""
+        BotInfo.start_time = start_time
