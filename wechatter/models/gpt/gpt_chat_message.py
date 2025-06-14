@@ -1,7 +1,8 @@
 import enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
 from pydantic import BaseModel
+from typing_extensions import Union, List, Dict
 
 if TYPE_CHECKING:
     from wechatter.models.gpt.gpt_chat_info import GptChatInfo
@@ -19,6 +20,8 @@ class GptChatMessage(BaseModel):
     message: "Message"
     gpt_chat_info: "GptChatInfo"
     gpt_response: str
+    content_type: str = "text"  # 新增字段，用于标识内容类型
+    content: Union[str, List[Dict[str, Any]]] = ""  # 新增字段，支持字符串或复杂对象
 
     def to_turn(self):
         return [

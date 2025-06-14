@@ -1,5 +1,5 @@
 # 微信机器人配置文件
-# 配置说明：https://github.com/Cassius0924/WeChatter?tab=readme-ov-file#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6
+# 配置说明：https://github.com/Ashesttt/QQ_WeChatter?tab=readme-ov-file#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6
 
 
 # Wechatter
@@ -12,14 +12,29 @@ wx_webhook_recv_api_path: /receive_msg
 wx_webhook_token: "your_wx_webhook_token"
 
 
+# QQChatter 配置文件
+
+
+# 机器人类型: qq 或 wechat
+bot_type: "qq"
+
+
+# QQ机器人配置
+qq_bot:
+  appid: ""  #到QQ开放平台获取appid和secret：https://q.qq.com/#/app/bot
+  secret: ""
+  intents: "all"  # 可选值: all, guild_messages, direct_messages, etc.
+
+
 # Admin
 admin_list: [ "文件传输助手", "AdminName" ]
+admin_qq_c2c_list: [ "" ]
 admin_group_list: [ "AdminGroupName" ]
 bark_url:
 
 
 # Bot
-bot_name: Cassius
+bot_name: Ashesttt
 
 
 # Chat
@@ -43,13 +58,21 @@ llms:
     api_url: https://api.openai.com/v1/chat/completions
     token: your_openai_token
     model: gpt-4
+    
+mcp_llms:
+  deepseek-v3:
+    api_url: https://api.deepseek.com/
+    token: your_deepseek_token
+    model: deepseek-chat
 
+multimodal: ["gemini-2.5-flash-preview-05-20", "gemini-2.0-flash"]
 
 
 # GitHub Webhook
 github_webhook_enabled: True
 github_webhook_api_path: /webhook/github
 github_webhook_receive_person_list: [ ]
+github_webhook_receive_person_qq_c2c_list: [ ]
 github_webhook_receive_group_list: [ ]
 
 
@@ -88,6 +111,8 @@ task_cron_list:
       - cmd: "weather"
         args: [ "广州" ]
         to_person_list: [ "You" ]
+      - cmd: "pai-post"
+        to_person_qq_c2c_list: [ "You" ]
       - cmd: "zhihu-hot"
         to_group_list: [ "Team" ]
 
