@@ -820,7 +820,7 @@ def desensitize_message(content):
     """
     对消息进行脱敏处理
     """
-    # 匹配所有URL
+"""     # 匹配所有URL
     url_pattern = r'https?://[^\s]+'
     content = re.sub(url_pattern, '[链接已隐藏]', content)
     # 匹配所有域名（如 example.com、abc.xyz、mail.example.co.uk）
@@ -828,3 +828,5 @@ def desensitize_message(content):
     domain_pattern = r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}\b'
     content = re.sub(domain_pattern, '[域名已隐藏]', content)
     return content
+ """
+    return re.sub(r'\.', '-', content)
