@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.exceptions import Bs4ParsingError
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
@@ -18,7 +19,7 @@ from wechatter.utils.time import get_current_hour, get_current_minute, get_curre
     keys=["weather", "天气", "天气预报", "几度"],
     desc="获取天气预报",
 )
-def weather_command_handler(to: Union[str, SendTo], message: str = "") -> None:
+async def weather_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     try:
         result = get_weather_str(message)
     except Exception as e:
@@ -251,3 +252,21 @@ def _generate_weather_message(
         # f"💡 会下雨，记得带伞！💡\n"
     )
     return message
+
+@mcp_server.tool(
+    name="天气查询",
+    description="输入城市名称，查询对应城市的天气",
+)
+async def weather_command_handler(message: str) -> str:
+    """ 
+    天气查询,如广州，北京，沈阳等等。
+    :param message: 输入城市名称
+    :return: 天气信息
+    """
+    try:
+        result = get_weather_str(message)
+        return result
+    except Exception as e:
+        error_message = f"获取天气信息失败: {e}"
+        logger.error(error_message)
+        return error_message

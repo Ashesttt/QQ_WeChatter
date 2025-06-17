@@ -830,4 +830,4 @@ def desensitize_message(content):
     content = re.sub(domain_pattern, '[域名已隐藏]', content)
     return content
     """
-    return re.sub(r'\.', '-', content)
+    return re.sub(r'\.', '_', content)
