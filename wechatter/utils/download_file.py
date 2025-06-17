@@ -33,7 +33,9 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
                 if chunk:
                     f.write(chunk)
 
-        logger.info(f"文件下载成功：{file_name}")
+        file_size_bytes = os.path.getsize(file_path)
+        file_size_mb = file_size_bytes / (1024 * 1024) 
+        logger.info(f"文件下载成功：{file_name}, 大小为：{file_size_mb:.2f} MB")
         return file_path
 
     except Exception as e:
@@ -45,8 +47,11 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
             result = subprocess.run(curl_command, capture_output=True, text=True)
 
             if result.returncode == 0:
-                logger.info(f"使用 curl 下载成功：{file_name}")
+                file_size_bytes = os.path.getsize(file_path)
+                file_size_mb = file_size_bytes / (1024 * 1024)
+                logger.info(f"使用 curl 下载成功：{file_name}, 大小为：{file_size_mb:.2f} MB")
                 logger.debug(f"curl 连接详情:\n{result.stderr}")
+                logger.debug(f"curl result:\n{result}")
                 return file_path
             else:
                 error_msg = f"curl 下载失败: {result.stderr}"
