@@ -1,5 +1,5 @@
 from wechatter.utils import check_and_create_folder
-
+import os
 
 def download_file(file_name: str, file_url: str, download_dir: str) -> str:
     """
