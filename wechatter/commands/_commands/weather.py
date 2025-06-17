@@ -254,7 +254,7 @@ def _generate_weather_message(
     return message
 
 @mcp_server.tool(
-    name="天气查询",
+    name="get_weather_infomation",
     description="输入城市名称，查询对应城市的天气",
 )
 async def weather_command_handler(message: str) -> str:
