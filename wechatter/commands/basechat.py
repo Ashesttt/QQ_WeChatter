@@ -409,12 +409,20 @@ class BaseChat:
                 _messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv_system + newconv
             else:
                 _messages = DEFAULT_CONVERSATION + chat_info.get_conversation() + newconv
+            
+            start_time = time.time()
             response = self.client.chat.completions.create(
                 model=chat_info.model,
                 messages=_messages,
             )
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+
+
+            logger.critical(response)
     
             msg_content = response.choices[0].message.content   
+            msg_content += f"\n\n⏳耗时: {elapsed_time:.3f}秒⏳"
     
             if is_save:
                 newconv.append({"role": "assistant", "content": msg_content})

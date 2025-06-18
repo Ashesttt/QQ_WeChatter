@@ -187,11 +187,8 @@ def compress_image(
             # 如果是透明的PNG，转换为JPEG会丢失透明度，所以保持PNG
             if original_format == "png":
                 logger.info("PNG图片，将保持PNG格式进行优化。")
-                print(f"output_path: {output_path}")
-
+                # 由于无损压缩的力度不够大，3.5mb的png只能压缩到2.8mb，所以这里使用有损压缩，先转换成webp进行优化，再保存为png
                 img.save(output_path, format="WEBP", optimize=optimize)
-
-
             elif original_format in ["JPEG", "JPG", "jpeg", "jpg"]:
                 logger.info(f"JPEG图片，使用质量 {quality} 进行压缩。")
                 img.save(output_path, format="JPEG", quality=quality, optimize=optimize)
