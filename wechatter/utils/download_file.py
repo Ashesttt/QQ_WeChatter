@@ -169,7 +169,7 @@ def compress_image(
             original_width, original_height = img.size
             original_format = image_path.split(".")[-1] # 获取原始图片格式
 
-            logger.info(f"尝试压缩图片：{os.path.basename(image_path)}，原始尺寸：{original_width}x{original_height}，格式：{original_format}，img.mode：{img.mode}")
+            logger.info(f"尝试压缩图片：{os.path.basename(image_path)}，原始尺寸：{original_width}x{original_height}，格式：{original_format}，img.mode：{img.mode}，img.format：{img.format}")
 
             # 1. 尺寸调整
             if max(original_width, original_height) > max_dimension:
@@ -185,10 +185,13 @@ def compress_image(
             output_format = original_format if original_format else "JPEG" # 默认为JPEG
             
             # 如果是透明的PNG，转换为JPEG会丢失透明度，所以保持PNG
-            # if original_format == "png" and img.mode in ('RGBA', 'LA'):
             if original_format == "png":
                 logger.info("PNG图片，将保持PNG格式进行优化。")
-                img.save(output_path, format="PNG", optimize=optimize, quality=quality)
+                print(f"output_path: {output_path}")
+
+                img.save(output_path, format="WEBP", optimize=optimize)
+
+
             elif original_format in ["JPEG", "JPG", "jpeg", "jpg"]:
                 logger.info(f"JPEG图片，使用质量 {quality} 进行压缩。")
                 img.save(output_path, format="JPEG", quality=quality, optimize=optimize)
