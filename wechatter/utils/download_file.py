@@ -93,7 +93,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
         # 使用 mimetypes 辅助判断，但最终以Pillow 能否打开为准
         import mimetypes
         mime_type, _ = mimetypes.guess_type(download_file_path)
-        if mine_type and mime_type.startswith("image/"):
+        if mime_type and mime_type.startswith("image/"):
             logger.info(f"文件 {file_name} 可能是图片 ({mime_type})，尝试进行压缩...")
             
             # 压缩后的文件路径，可以考虑使用不同的文件名，例如添加 _compressed 后缀
