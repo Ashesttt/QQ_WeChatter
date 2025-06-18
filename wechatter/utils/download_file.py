@@ -1,8 +1,5 @@
 from wechatter.utils import check_and_create_folder
 import os
-import subprocess
-from PIL import Image, UnidentifiedImageError
-import mimetypes
 
 def download_file(file_name: str, file_url: str, download_dir: str) -> str:
     """
@@ -94,6 +91,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
     if download_successful:
         # 尝试判断是否为图片并进行压缩使用
         # 使用 mimetypes 辅助判断，但最终以Pillow 能否打开为准
+        import mimetypes
         mime_type, _ = mimetypes.guess_type(download_file_path)
         if mine_type and mime_type.startswith("image/"):
             logger.info(f"文件 {file_name} 可能是图片 ({mime_type})，尝试进行压缩...")
@@ -163,6 +161,7 @@ def compress_image(
     :param optimize: 是否对 PNG 图像进行优化。
     :return: 压缩后图片的完整路径，如果不是图片或压缩失败则返回原始路径。
     """
+    from PIL import Image, UnidentifiedImageError
     try:
         # 尝试打开图片
         with Image.open(image_path) as img:
