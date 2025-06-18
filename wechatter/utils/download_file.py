@@ -187,8 +187,8 @@ def compress_image(
             # 如果是透明的PNG，转换为JPEG会丢失透明度，所以保持PNG
             # if original_format == "png" and img.mode in ('RGBA', 'LA'):
             if original_format == "png":
-                logger.info("PNG图片包含透明度，将保持PNG格式进行优化。")
-                img.save(output_path, format="PNG", optimize=optimize, compress_level=9)
+                logger.info("PNG图片，将保持PNG格式进行优化。")
+                img.save(output_path, format="PNG", optimize=optimize, quality=quality)
             elif original_format in ["JPEG", "JPG", "jpeg", "jpg"]:
                 logger.info(f"JPEG图片，使用质量 {quality} 进行压缩。")
                 img.save(output_path, format="JPEG", quality=quality, optimize=optimize)
