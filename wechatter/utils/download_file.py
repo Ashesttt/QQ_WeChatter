@@ -177,7 +177,7 @@ def compress_image(
                 new_width = int(original_width * ratio)
                 new_height = int(original_height * ratio)
                 img = img.resize((new_width, new_height), Image.LANCZOS) # 使用高质量的缩放算法
-                logger.info(f"图片尺寸调整为：{new_width}x{new_height}，此时图片大小变为：{get_file_size_formatted(image_path)}")
+                logger.info(f"图片尺寸调整为：{new_width}x{new_height}")
 
             # 2. 格式转换与质量压缩
             # 确定输出格式。通常，如果不是 JPEG，可以转换为 JPEG 以获得更好的压缩比（如果不需要透明度）
@@ -185,13 +185,13 @@ def compress_image(
             output_format = original_format if original_format else "JPEG" # 默认为JPEG
             
             # 如果是透明的PNG，转换为JPEG会丢失透明度，所以保持PNG
-            if original_format == "PNG" and img.mode in ('RGBA', 'LA'):
+            if original_format == "png" and img.mode in ('RGBA', 'LA'):
                 logger.info("PNG图片包含透明度，将保持PNG格式进行优化。")
                 img.save(output_path, format="PNG", optimize=optimize)
-            elif original_format in ["JPEG", "JPG"]:
+            elif original_format in ["JPEG", "JPG", "jpeg", "jpg"]:
                 logger.info(f"JPEG图片，使用质量 {quality} 进行压缩。")
                 img.save(output_path, format="JPEG", quality=quality, optimize=optimize)
-            elif original_format == "WEBP":
+            elif original_format == "webp":
                 logger.info(f"WebP图片，使用质量 {quality} 进行压缩。")
                 img.save(output_path, format="WEBP", quality=quality)
             else:

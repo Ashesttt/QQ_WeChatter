@@ -74,8 +74,6 @@ def main():
     # 加载游戏
     load_games()
 
-    print_wechatter_art_text()
-
     # 启动Web服务器作为单独线程
     web_thread = threading.Thread(target=start_web_server)
     web_thread.daemon = True
