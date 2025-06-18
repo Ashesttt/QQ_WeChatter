@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Union
 
 import requests
+import time
 from loguru import logger
 from openai import OpenAI
 
