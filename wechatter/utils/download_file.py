@@ -167,7 +167,7 @@ def compress_image(
         # 尝试打开图片
         with Image.open(image_path) as img:
             original_width, original_height = img.size
-            original_format = img.format # 获取原始图片格式
+            original_format = image_path.split(".")[-1] # 获取原始图片格式
 
             logger.info(f"尝试压缩图片：{os.path.basename(image_path)}，原始尺寸：{original_width}x{original_height}，格式：{original_format}")
 
@@ -177,7 +177,7 @@ def compress_image(
                 new_width = int(original_width * ratio)
                 new_height = int(original_height * ratio)
                 img = img.resize((new_width, new_height), Image.LANCZOS) # 使用高质量的缩放算法
-                logger.info(f"图片尺寸调整为：{new_width}x{new_height}")
+            logger.info(f"图片尺寸调整为：{new_width}x{new_height}，此时图片大小变为：{get_file_size_formatted(image_path)}")
 
             # 2. 格式转换与质量压缩
             # 确定输出格式。通常，如果不是 JPEG，可以转换为 JPEG 以获得更好的压缩比（如果不需要透明度）
