@@ -1,5 +1,6 @@
 from wechatter.utils import check_and_create_folder
 import os
+from loguru import logger
 
 def download_file(file_name: str, file_url: str, download_dir: str) -> str:
     """
