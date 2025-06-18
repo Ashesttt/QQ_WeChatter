@@ -421,9 +421,17 @@ class BaseChat:
 
 
             logger.critical(response)
+
+            content = response.choices[0].message.content # 回复内容
+            prompt_tokens = response.usage.prompt_tokens # 提示词数量
+            completion_tokens = response.usage.completion_tokens # 回复词数量
+            total_tokens = response.usage.total_tokens # 总词数量
     
-            msg_content = response.choices[0].message.content   
+            msg_content = content
             msg_content += f"\n\n⏳耗时: {elapsed_time:.3f}秒⏳"
+            msg_content += f"\n📝提示词tokens: {prompt_tokens}个📝"
+            msg_content += f"\n📝回复词tokens: {completion_tokens}个📝"
+            msg_content += f"\n📝总tokens: {total_tokens}个📝"
     
             if is_save:
                 newconv.append({"role": "assistant", "content": msg_content})
