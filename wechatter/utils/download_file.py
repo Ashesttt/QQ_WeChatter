@@ -169,7 +169,7 @@ def compress_image(
             original_width, original_height = img.size
             original_format = image_path.split(".")[-1] # 获取原始图片格式
 
-            logger.info(f"尝试压缩图片：{os.path.basename(image_path)}，原始尺寸：{original_width}x{original_height}，格式：{original_format}")
+            logger.info(f"尝试压缩图片：{os.path.basename(image_path)}，原始尺寸：{original_width}x{original_height}，格式：{original_format}，img.mode：{img.mode}")
 
             # 1. 尺寸调整
             if max(original_width, original_height) > max_dimension:
