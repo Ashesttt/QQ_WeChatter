@@ -23,7 +23,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
         file_url = "https://" + file_url
     
     download_successful = False
-    download_file_path = ""
+    downloaded_file_path = ""
 
     try:
         logger.info(f"尝试使用 requests 下载文件：{file_name} from {file_url}")
@@ -38,7 +38,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
                     f.write(chunk)
         
         download_successful = True
-        download_file_path = file_path
+        downloaded_file_path = file_path
         logger.info(f"requests 下载成功：{file_name}, 原始大小：{get_file_size_formatted(file_path)}")
 
     except requests.exceptions.RequestException as e:
@@ -55,7 +55,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
             result = subprocess.run(curl_command, capture_output=True, text=True, check=True) # check=True: 如果返回非零状态码则抛出CalledProcessError
 
             download_successful = True
-            download_file_path = file_path
+            downloaded_file_path = file_path
             logger.info(f"curl 下载成功：{file_name}, 原始大小为：{get_file_size_formatted(file_path)}")
             if result.stderr:
                 logger.error(f"curl 错误：{result.stderr}")
@@ -92,7 +92,7 @@ def download_file(file_name: str, file_url: str, download_dir: str) -> str:
         # 尝试判断是否为图片并进行压缩使用
         # 使用 mimetypes 辅助判断，但最终以Pillow 能否打开为准
         import mimetypes
-        mime_type, _ = mimetypes.guess_type(download_file_path)
+        mime_type, _ = mimetypes.guess_type(downloaded_file_path)
         if mime_type and mime_type.startswith("image/"):
             logger.info(f"文件 {file_name} 可能是图片 ({mime_type})，尝试进行压缩...")
             
