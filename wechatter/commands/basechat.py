@@ -427,13 +427,14 @@ class BaseChat:
             total_tokens = response.usage.total_tokens # 总词数量
     
             msg_content = content
+            # 为了防止ai模仿，就不把下面的内容加到对话历史中
             msg_content += f"\n\n⏳耗时: {elapsed_time:.3f}秒"
             msg_content += f"\n💬 提示词tokens: {prompt_tokens}个"
             msg_content += f"\n🤖 回复词tokens: {completion_tokens}个"
             msg_content += f"\n📊 总tokens: {total_tokens}个"
     
             if is_save:
-                newconv.append({"role": "assistant", "content": msg_content})
+                newconv.append({"role": "assistant", "content": content})
                 chat_info.extend_conversation(newconv)
                 with make_db_session() as session:
                     _chat_info = session.query(DbGptChatInfo).filter_by(id=chat_info.id).first()
