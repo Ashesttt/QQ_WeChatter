@@ -1,5 +1,8 @@
 from wechatter.utils import check_and_create_folder
 import os
+import subprocess
+from PIL import Image, UnidentifiedImageError
+import mimetypes
 
 def download_file(file_name: str, file_url: str, download_dir: str) -> str:
     """
