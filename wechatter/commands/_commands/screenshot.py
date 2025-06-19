@@ -134,7 +134,7 @@ async def get_web_screenshot_tool(url: str) -> str:
         #         url = http_url
         #     else:
         #         url = "https://" + url
-        result = await get_web_screenshot(url)
+        result = get_web_screenshot(url)
         return result 
     except Exception as e:
         logger.error(f"截图失败: {str(e)}")
