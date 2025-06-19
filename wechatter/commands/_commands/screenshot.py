@@ -2,7 +2,7 @@ import os
 from typing import Union
 from urllib.parse import urlparse
 
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 from loguru import logger
 
 from wechatter.commands.handlers import command
@@ -34,7 +34,7 @@ def screenshot_command_handler(to: Union[str, SendTo], message: str = "", messag
 
     try:
         sender.send_msg(to, "正在截取网页，请稍候...")
-        path = get_web_screenshot(message)
+        path = await get_web_screenshot(message)
         sender.send_msg(to, path, type="localfile")
     except Exception as e:
         error_message = f"截图失败，错误信息：{str(e)}"
@@ -43,7 +43,7 @@ def screenshot_command_handler(to: Union[str, SendTo], message: str = "", messag
 
 
 @screenshot_command_handler.mainfunc
-def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) -> str:
+async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) -> str:
     """
     获取网页截图并保存
     
@@ -56,21 +56,21 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
     str: 保存的截图文件路径
     """
     try:
-        with sync_playwright() as p:
+        async with sync_playwright() as p:
             # 启动Chromium浏览器实例
             logger.info("正在启动浏览器实例...")
-            browser = p.chromium.launch(
+            browser = await p.chromium.launch(
                 args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
             )
             logger.debug("已启动浏览器实例")
 
-            page = browser.new_page()
+            page = await browser.new_page()
             logger.debug("已创建新页面")
 
             page.set_default_timeout(timeout)
 
             logger.debug(f"正在访问URL: {url}")
-            page.goto(url)
+            await page.goto(url)
             logger.debug("页面已加载")
 
             # 如果未提供输出路径，则自动生成文件名
@@ -95,11 +95,11 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
                 )
 
             # 截取完整页面截图并保存到指定路径
-            page.screenshot(path=output_path, full_page=True, type="png")
+            await page.screenshot(path=output_path, full_page=True, type="png")
             logger.info("截图已完成")
 
             logger.debug("正在关闭浏览器...")
-            browser.close()
+            await browser.close()
             logger.debug("浏览器已关闭")
 
             # 检查文件是否成功保存
@@ -134,7 +134,7 @@ async def get_web_screenshot_tool(url: str) -> str:
         #         url = http_url
         #     else:
         #         url = "https://" + url
-        result = get_web_screenshot(url)
+        result = await get_web_screenshot(url)
         return result 
     except Exception as e:
         logger.error(f"截图失败: {str(e)}")
