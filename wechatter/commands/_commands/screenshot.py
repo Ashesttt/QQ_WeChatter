@@ -6,6 +6,7 @@ from playwright.sync_api import sync_playwright
 from loguru import logger
 
 from wechatter.commands.handlers import command
+from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_abs_path, run_in_thread
