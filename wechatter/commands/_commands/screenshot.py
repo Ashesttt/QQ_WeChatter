@@ -2,11 +2,10 @@ import os
 from typing import Union
 from urllib.parse import urlparse
 
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 from loguru import logger
 
 from wechatter.commands.handlers import command
-from wechatter.commands.mcp import mcp_server
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_abs_path, run_in_thread
@@ -22,7 +21,7 @@ playwright install chromium(必须手动下载）
     desc="对网页进行截图并发送。用法：/网页截图 [URL]",
 )
 @run_in_thread()
-async def screenshot_command_handler(to: Union[str, SendTo], message: str = "", message_obj=None) -> None:
+def screenshot_command_handler(to: Union[str, SendTo], message: str = "", message_obj=None) -> None:
     """
     网页截图命令处理函数
     """
@@ -34,7 +33,7 @@ async def screenshot_command_handler(to: Union[str, SendTo], message: str = "", 
 
     try:
         sender.send_msg(to, "正在截取网页，请稍候...")
-        path = await get_web_screenshot(message)
+        path = get_web_screenshot(message)
         sender.send_msg(to, path, type="localfile")
     except Exception as e:
         error_message = f"截图失败，错误信息：{str(e)}"
@@ -43,7 +42,7 @@ async def screenshot_command_handler(to: Union[str, SendTo], message: str = "", 
 
 
 @screenshot_command_handler.mainfunc
-async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) -> str:
+def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) -> str:
     """
     获取网页截图并保存
     
@@ -56,21 +55,21 @@ async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 3
     str: 保存的截图文件路径
     """
     try:
-        async with async_playwright() as p:
+        with sync_playwright() as p:
             # 启动Chromium浏览器实例
             logger.info("正在启动浏览器实例...")
-            browser = await p.chromium.launch(
+            browser = p.chromium.launch(
                 args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"]
             )
             logger.debug("已启动浏览器实例")
 
-            page = await browser.new_page()
+            page = browser.new_page()
             logger.debug("已创建新页面")
 
             page.set_default_timeout(timeout)
 
             logger.debug(f"正在访问URL: {url}")
-            await page.goto(url)
+            page.goto(url)
             logger.debug("页面已加载")
 
             # 如果未提供输出路径，则自动生成文件名
@@ -95,11 +94,11 @@ async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 3
                 )
 
             # 截取完整页面截图并保存到指定路径
-            await page.screenshot(path=output_path, full_page=True, type="png")
+            page.screenshot(path=output_path, full_page=True, type="png")
             logger.info("截图已完成")
 
             logger.debug("正在关闭浏览器...")
-            await browser.close()
+            browser.close()
             logger.debug("浏览器已关闭")
 
             # 检查文件是否成功保存
@@ -111,31 +110,6 @@ async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 3
 
             return output_path
 
-    except Exception as e:
-        logger.error(f"截图失败: {str(e)}")
-        raise RuntimeError(f"截图失败: {str(e)}")
-
-@mcp_server.tool(
-    name="get_web_screenshot_tool",
-    description="获取网页截图。",
-)
-async def get_web_screenshot_tool(url: str) -> str:
-    """ 
-    获取网页截图
-    :param url: 网页URL,一定要判断是否为http或者https，如果是域名，则帮我加上http或者https
-    :return: 截图文件路径
-    """
-    try:
-        # if not url.startswith("http://") and not url.startswith("https://"):
-        #     http_url = "http://" + url
-        #     # 尝试能否访问
-        #     response = requests.get(http_url)
-        #     if response.status_code == 200:
-        #         url = http_url
-        #     else:
-        #         url = "https://" + url
-        result = await get_web_screenshot(url)
-        return result 
     except Exception as e:
         logger.error(f"截图失败: {str(e)}")
         raise RuntimeError(f"截图失败: {str(e)}")
