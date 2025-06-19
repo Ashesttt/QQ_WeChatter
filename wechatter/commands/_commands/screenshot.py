@@ -22,7 +22,7 @@ playwright install chromium(必须手动下载）
     desc="对网页进行截图并发送。用法：/网页截图 [URL]",
 )
 @run_in_thread()
-def screenshot_command_handler(to: Union[str, SendTo], message: str = "", message_obj=None) -> None:
+async def screenshot_command_handler(to: Union[str, SendTo], message: str = "", message_obj=None) -> None:
     """
     网页截图命令处理函数
     """
