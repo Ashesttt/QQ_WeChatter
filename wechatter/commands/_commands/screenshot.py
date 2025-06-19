@@ -113,3 +113,27 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
     except Exception as e:
         logger.error(f"截图失败: {str(e)}")
         raise RuntimeError(f"截图失败: {str(e)}")
+
+mcp_server.tool(
+    name="get_web_screenshot_tool",
+    description="获取网页截图。",
+)
+async def get_web_screenshot_tool(url: str) -> str:
+    """ 
+    获取网页截图
+    :param url: 网页URL,一定要判断是否为http或者https，如果是域名，则帮我加上http或者https
+    :return: 截图文件路径
+    """
+    try:
+        # if not url.startswith("http://") and not url.startswith("https://"):
+        #     http_url = "http://" + url
+        #     # 尝试能否访问
+        #     response = requests.get(http_url)
+        #     if response.status_code == 200:
+        #         url = http_url
+        #     else:
+        #         url = "https://" + url
+        return await run_in_thread(get_web_screenshot, url)
+    except Exception as e:
+        logger.error(f"截图失败: {str(e)}")
+        raise RuntimeError(f"截图失败: {str(e)}")
