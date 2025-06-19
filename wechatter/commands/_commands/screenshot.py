@@ -115,7 +115,7 @@ def get_web_screenshot(url: str, output_path: str = None, timeout: int = 30000) 
         logger.error(f"截图失败: {str(e)}")
         raise RuntimeError(f"截图失败: {str(e)}")
 
-mcp_server.tool(
+@mcp_server.tool(
     name="get_web_screenshot_tool",
     description="获取网页截图。",
 )
