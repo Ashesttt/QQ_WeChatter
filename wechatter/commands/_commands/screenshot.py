@@ -56,7 +56,7 @@ async def get_web_screenshot(url: str, output_path: str = None, timeout: int = 3
     str: 保存的截图文件路径
     """
     try:
-        async with sync_playwright() as p:
+        async with async_playwright() as p:
             # 启动Chromium浏览器实例
             logger.info("正在启动浏览器实例...")
             browser = await p.chromium.launch(
