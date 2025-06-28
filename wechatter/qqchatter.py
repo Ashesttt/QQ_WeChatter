@@ -8,6 +8,7 @@
 
 import threading
 import asyncio
+import time
 
 import uvicorn
 
@@ -15,6 +16,7 @@ import wechatter.database as db
 from wechatter.app.app import app
 from wechatter.app.routers.qq_bot import create_qq_bot
 from wechatter.art_text import print_wechatter_art_text
+from wechatter.bot import BotInfo
 from wechatter.config import config
 from wechatter.games import load_games
 from wechatter.utils import check_and_create_folder
@@ -55,6 +57,9 @@ def main():
     QQChatter 启动文件
     """
     # BotInfo.update_name(config["bot_name"])
+    # 记录启动时间
+    BotInfo.start_time = time.time()
+    
     # 创建文件夹
     check_and_create_folder("data/qrcodes")
     check_and_create_folder("data/todos")
@@ -68,8 +73,6 @@ def main():
 
     # 加载游戏
     load_games()
-
-    print_wechatter_art_text()
 
     # 启动Web服务器作为单独线程
     web_thread = threading.Thread(target=start_web_server)

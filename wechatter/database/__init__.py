@@ -1,5 +1,6 @@
 from .database import create_tables, make_db_session
 from .tables import person_group_relation  # noqa
+from .tables.Statistical_table import MessageStats, CommandStats
 from .tables.game_states import GameStates
 from .tables.gpt_chat_info import GptChatInfo
 from .tables.gpt_chat_message import GptChatMessage
@@ -18,4 +19,6 @@ __all__ = [
     "Person",
     "QuotedResponse",
     "GameStates",
+    "MessageStats",
+    "CommandStats",
 ]
