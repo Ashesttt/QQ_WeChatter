@@ -6,6 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
 
 from wechatter.models.scheduler import CronTask
+from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
 from wechatter.utils import get_abs_path, load_json, save_json
 
@@ -73,9 +74,13 @@ class Scheduler:
                 person_id = filename.split('_')[0]
                 for remind in expired_reminds:
                     try:
+                        from wechatter.models.wechat import Person
+                        person = Person(id=person_id)
+                        to = SendTo(person=person)
                         sender.send_msg(
-                            to=person_id,
-                            message=f"⏰ 提醒: {remind['content']}"
+                            to=to,
+                            message=f"⏰ 提醒: {remind['content']}",
+                            is_group=False
                         )
                         logger.info(f"已发送提醒: {remind['content']} 给 {person_id}")
                     except Exception as e:

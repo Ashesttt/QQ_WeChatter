@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from typing import Union
 
+from mcp.server.fastmcp.server import logger
 
 from wechatter.commands.handlers import command
 from wechatter.models.wechat import SendTo
@@ -26,7 +27,11 @@ async def remind_command_handler(to: Union[str, SendTo], message: str = "") -> N
         - 相对时间: 今天/明天HHMM (如今天2159, 明天2200)
     """
     if not message:
-        sender.send_msg(to, "请输入提醒内容和时间。格式: /remind [内容] [时间]")
+        _message = "请输入提醒内容和时间。格式: /remind [内容] [时间]。\n"
+        _message += """    时间格式: 
+        - 绝对时间: YYYYMMDDHHMM (如202505182159)
+        - 相对时间: 今天/明天HHMM (如今天2159, 明天2200)"""
+        sender.send_msg(to, _message)
         return
 
     # 解析内容和时间
@@ -46,9 +51,11 @@ async def remind_command_handler(to: Union[str, SendTo], message: str = "") -> N
         
         # 返回成功消息
         sender.send_msg(to, f"✅ 提醒设置成功！\n内容: {content}\n时间: {trigger_time.strftime('%Y-%m-%d %H:%M')}")
+        logger.info(f"{to.p_id} 设置了提醒: {content}")
         
     except ValueError as e:
         sender.send_msg(to, f"❌ 设置提醒失败: {str(e)}")
+        logger.error(f"{to.p_id} 设置提醒失败: {str(e)}")
 
 
 def parse_time(time_str: str) -> datetime:
