@@ -11,6 +11,7 @@ app = FastAPI()
 
 app.include_router(routers.wechat_router)
 app.include_router(routers.upload_router)  # 添加图片上传路由
+app.include_router(routers.coolmonitor_router)
 
 
 if config["github_webhook_enabled"]:

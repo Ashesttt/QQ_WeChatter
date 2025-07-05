@@ -383,7 +383,7 @@ class QQBot(botpy.Client):
         import asyncio
     
         # 每隔多少秒检查一次阻塞队列
-        CHECK_INTERVAL = 60  # 1分钟检查一次
+        CHECK_INTERVAL = 180  # 3分钟检查一次
     
         while True:
             # 等待指定时间

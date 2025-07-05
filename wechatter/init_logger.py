@@ -67,8 +67,10 @@ def init_logger(log_level: str = ""):
 
     # 添加日志文件
     logger.add(
-        LOG_FILE,
-        rotation="00:00",
-        encoding="utf-8",
-        format=LOGURU_FORMAT,
-    )
+    LOG_FILE,
+    rotation="00:00",
+    retention="7 days",
+    compression="zip",
+    encoding="utf-8",
+    format=LOGURU_FORMAT,
+)
