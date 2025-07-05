@@ -67,6 +67,7 @@ def main():
     check_and_create_folder("data/upload_image")
     check_and_create_folder("data/screenshots")
     check_and_create_folder("data/download_file")
+    check_and_create_folder("data/reminds")
 
     # 初始化数据库
     db.create_tables()
