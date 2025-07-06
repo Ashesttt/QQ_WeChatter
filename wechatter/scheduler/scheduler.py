@@ -79,11 +79,15 @@ class Scheduler:
                         person = None
                         if remind['to']['person']['id']:
                             person = Person(
-                                id=remind['to']['person']['id'],
-                                name=remind['to']['person']['name'],
-                                user_openid=remind['to']['person']['user_openid'],
-                                member_openid=remind['to']['person']['member_openid']
-                            )
+                                 id=remind['to']['person']['id'],
+                                 name=remind['to']['person']['name'],
+                                 alias='',
+                                 gender='male',
+                                 is_star=False,
+                                 is_friend=True,
+                                 user_openid=remind['to']['person']['user_openid'],
+                                 member_openid=remind['to']['person']['member_openid']
+                             )
                         
                         group = None
                         if remind['to']['group']['id']:
