@@ -106,10 +106,7 @@ class Scheduler:
                         else:
                             _is_group = False
                         # 修改send_msg调用方式
-                        sender.send_msg(
-                            to=to,
-                            message=f"⏰ 提醒: {remind['content']}",
-                        )
+                        sender.send_msg(to, f"⏰ 提醒: {remind['content']}")
                         logger.info(f"已发送提醒: {remind['content']} 给{to.p_id}")
                     except Exception as e:
                         logger.error(f"发送提醒失败: {str(e)}")
