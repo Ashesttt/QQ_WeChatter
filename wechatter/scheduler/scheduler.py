@@ -98,10 +98,6 @@ class Scheduler:
                             )
                         
                         to = SendTo(
-                            p_id=remind['to']['p_id'],
-                            p_name=remind['to']['p_name'],
-                            g_id=remind['to']['g_id'],
-                            g_name=remind['to']['g_name'],
                             person=person,
                             group=group
                         )
