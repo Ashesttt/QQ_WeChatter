@@ -47,7 +47,7 @@ async def remind_command_handler(to: Union[str, SendTo], message: str = "") -> N
         trigger_time = parse_time(time_str)
         logger.critical(f"to:{to}")
         # 保存提醒
-        remind_id = save_remind(to.p_id, content, trigger_time)
+        remind_id = save_remind(to, content, trigger_time)
         
         # 返回成功消息
         sender.send_msg(to, f"✅ 提醒设置成功！\n内容: {content}\n时间: {trigger_time.strftime('%Y-%m-%d %H:%M')}")
@@ -91,18 +91,34 @@ def parse_time(time_str: str) -> datetime:
     raise ValueError("时间格式错误，请使用YYYYMMDDHHMM或今天/明天HHMM格式")
 
 
-def save_remind(person_id: str, content: str, trigger_time: datetime) -> str:
+def save_remind(to: SendTo, content: str, trigger_time: datetime) -> str:
     """
     保存提醒到JSON文件
     """
     
     # 生成唯一ID
+    person_id = to.p_id
     remind_id = f"remind_{int(trigger_time.timestamp())}_{person_id}"
     
     # 构造提醒数据
     remind_data = {
         "id": remind_id,
-        "person_id": person_id,
+        "to": {
+            "p_id": to.p_id,
+            "p_name": to.p_name,
+            "person": {
+                "id": to.person.id if to.person else None,
+                "name": to.person.name if to.person else None,
+                "user_openid": to.person.user_openid if to.person else None,
+                "member_openid": to.person.member_openid if to.person else None
+            },
+            "group": {
+                "id": to.group.id if to.group else None,
+                "name": to.group.name if to.group else None
+            },
+            "g_id": to.g_id,
+            "g_name": to.g_name
+        },
         "content": content,
         "trigger_time": trigger_time.strftime("%Y-%m-%d %H:%M:%S"),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")

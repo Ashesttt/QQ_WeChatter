@@ -5,6 +5,7 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
 
+from wechatter.models import Person
 from wechatter.models.scheduler import CronTask
 from wechatter.models.wechat import SendTo
 from wechatter.sender import sender
@@ -71,18 +72,39 @@ class Scheduler:
                     continue
                 
                 # 发送提醒
-                person_id = filename.split('_')[0]
                 for remind in expired_reminds:
                     try:
-                        from wechatter.models.wechat import Person
-                        person = Person(id=person_id)
-                        to = SendTo(person=person)
-                        sender.mass_send_msg(
+                        from wechatter.models.wechat import Group
+                        
+                        person = None
+                        if remind['to']['person']['id']:
+                            person = Person(
+                                id=remind['to']['person']['id'],
+                                name=remind['to']['person']['name'],
+                                user_openid=remind['to']['person']['user_openid'],
+                                member_openid=remind['to']['person']['member_openid']
+                            )
+                        
+                        group = None
+                        if remind['to']['group']['id']:
+                            group = Group(
+                                id=remind['to']['group']['id'],
+                                name=remind['to']['group']['name']
+                            )
+                        
+                        to = SendTo(
+                            p_id=remind['to']['p_id'],
+                            p_name=remind['to']['p_name'],
+                            g_id=remind['to']['g_id'],
+                            g_name=remind['to']['g_name'],
+                            person=person,
+                            group=group
+                        )
+                        sender.send_msg(
                             to=to,
                             message=f"⏰ 提醒: {remind['content']}",
-                            is_group=False
                         )
-                        logger.info(f"已发送提醒: {remind['content']} 给 {person_id}")
+                        logger.info(f"已发送提醒: {remind['content']} 给{to.p_id}")
                     except Exception as e:
                         logger.error(f"发送提醒失败: {str(e)}")
                 
