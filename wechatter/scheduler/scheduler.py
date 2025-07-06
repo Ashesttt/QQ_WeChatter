@@ -77,7 +77,7 @@ class Scheduler:
                         from wechatter.models.wechat import Person
                         person = Person(id=person_id)
                         to = SendTo(person=person)
-                        sender.send_msg(
+                        sender.mass_send_msg(
                             to=to,
                             message=f"⏰ 提醒: {remind['content']}",
                             is_group=False

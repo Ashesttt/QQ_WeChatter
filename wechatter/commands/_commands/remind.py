@@ -45,7 +45,7 @@ async def remind_command_handler(to: Union[str, SendTo], message: str = "") -> N
     try:
         # 解析时间
         trigger_time = parse_time(time_str)
-        
+        logger.critical(f"to:{to}")
         # 保存提醒
         remind_id = save_remind(to.p_id, content, trigger_time)
         
