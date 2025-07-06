@@ -104,9 +104,11 @@ class Scheduler:
                             person=person,
                             group=group
                         )
+                        # 修改send_msg调用方式
                         sender.send_msg(
                             to=to,
                             message=f"⏰ 提醒: {remind['content']}",
+                            is_group=to.g_id is not None  # 根据是否有群组ID判断是否为群消息
                         )
                         logger.info(f"已发送提醒: {remind['content']} 给{to.p_id}")
                     except Exception as e:
