@@ -109,7 +109,6 @@ class Scheduler:
                         sender.send_msg(
                             to=to,
                             message=f"⏰ 提醒: {remind['content']}",
-                            is_group=_is_group
                         )
                         logger.info(f"已发送提醒: {remind['content']} 给{to.p_id}")
                     except Exception as e:
