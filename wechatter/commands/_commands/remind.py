@@ -110,11 +110,16 @@ def save_remind(to: SendTo, content: str, trigger_time: datetime) -> str:
                 "id": to.person.id if to.person else None,
                 "name": to.person.name if to.person else None,
                 "user_openid": to.person.user_openid if to.person else None,
-                "member_openid": to.person.member_openid if to.person else None
+                "member_openid": to.person.member_openid if to.person else None,
+                "guild_id": to.person.guild_id if to.person else None,
+                "msg_id": to.person.msg_id if to.person else None
             },
             "group": {
                 "id": to.group.id if to.group else None,
-                "name": to.group.name if to.group else None
+                "name": to.group.name if to.group else None,
+                "member_list": to.group.member_list if to.group else None,
+                "admin_id_list": to.group.admin_id_list if to.group else None,
+                "msg_id": to.group.msg_id if to.group else None
             },
             "g_id": to.g_id,
             "g_name": to.g_name
