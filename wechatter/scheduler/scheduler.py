@@ -87,14 +87,17 @@ class Scheduler:
                                  is_star=False,
                                  is_friend=True,
                                  user_openid=remind['to']['person']['user_openid'],
-                                 member_openid=remind['to']['person']['member_openid']
+                                 member_openid=remind['to']['person']['member_openid'],
+                                 guild_id=remind['to']['person']['guild_id'],
+                                 msg_id=remind['to']['person']['msg_id']
                              )
                         
                         group = None
                         if remind['to']['group']['id']:
                             group = Group(
                                 id=remind['to']['group']['id'],
-                                name=remind['to']['group']['name']
+                                name=remind['to']['group']['name'],
+                                member_list=[]
                             )
                         
                         to = SendTo(
