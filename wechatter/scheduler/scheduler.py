@@ -88,7 +88,7 @@ class Scheduler:
                                  is_friend=True,
                                  user_openid=remind['to']['person']['user_openid'],
                                  member_openid=remind['to']['person']['member_openid'],
-                                 guild_id=remind['to']['person']['guild_id'],
+                                 # guild_id=remind['to']['person']['guild_id'],
                                  msg_id=remind['to']['person']['msg_id']
                              )
                         
