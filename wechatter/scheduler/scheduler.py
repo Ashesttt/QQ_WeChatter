@@ -104,6 +104,7 @@ class Scheduler:
                             person=person,
                             group=group
                         )
+                        logger.critical(to)
                         if to.g_id and to.g_name:
                             _is_group = True
                         else:
