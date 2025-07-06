@@ -1,7 +1,7 @@
 import os
 import re
 from datetime import datetime
-from typing import Union
+from typing import Union, List
 
 from mcp.server.fastmcp.server import logger
 
@@ -16,22 +16,20 @@ REMIND_DATA_PATH = get_abs_path("data/reminds")
 @command(
     command="remind",
     keys=["提醒", "remind"],
-    desc="设置提醒功能。格式: /remind [内容] [时间]"
+    desc="设置提醒功能。格式: /remind [内容] [时间]，直接输入/remind查看所有提醒"
 )
 async def remind_command_handler(to: Union[str, SendTo], message: str = "") -> None:
     """
     提醒功能处理函数
-    格式: /remind [内容] [时间]
+    格式: /remind [内容] [时间] 或 /remind查看所有提醒
     时间格式: 
         - 绝对时间: YYYYMMDDHHMM (如202505182159)
         - 相对时间: 今天/明天HHMM (如今天2159, 明天2200)
     """
     if not message:
-        _message = "请输入提醒内容和时间。格式: /remind [内容] [时间]。\n"
-        _message += """    时间格式: 
-        - 绝对时间: YYYYMMDDHHMM (如202505182159)
-        - 相对时间: 今天/明天HHMM (如今天2159, 明天2200)"""
-        sender.send_msg(to, _message)
+        # 查看所有提醒
+        result = view_reminds(to.p_id, to.p_name)
+        sender.send_msg(to, result)
         return
 
     # 解析内容和时间
@@ -140,3 +138,24 @@ def save_remind(to: SendTo, content: str, trigger_time: datetime) -> str:
     save_json(file_path, reminds)
     
     return remind_id
+
+
+def view_reminds(person_id: str, person_name: str) -> str:
+    """查看特定用户的所有提醒事项"""
+    file_path = os.path.join(REMIND_DATA_PATH, f"{person_id}_reminds.json")
+    if not os.path.exists(file_path):
+        return f"✨{person_name}的提醒列表✨\n暂无提醒事项。"
+
+    reminds = load_json(file_path)
+    # 按触发时间排序
+    reminds.sort(key=lambda x: datetime.strptime(x['trigger_time'], '%Y-%m-%d %H:%M:%S'))
+
+    if not reminds:
+        return f"✨{person_name}的提醒列表✨\n暂无提醒事项。"
+
+    formatted_reminds = f"✨{person_name}的提醒列表✨\n"
+    for i, remind in enumerate(reminds, 1):
+        trigger_time = datetime.strptime(remind['trigger_time'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M')
+        formatted_reminds += f"{i}. [{trigger_time}] {remind['content']}\n"
+
+    return formatted_reminds
