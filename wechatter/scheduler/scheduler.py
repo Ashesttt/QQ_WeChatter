@@ -89,7 +89,7 @@ class Scheduler:
                                  user_openid=remind['to']['person']['user_openid'],
                                  member_openid=remind['to']['person']['member_openid'],
                                  guild_id=remind['to']['person']['guild_id'],
-                                 msg_id=remind['to']['person']['msg_id']
+                                 # msg_id=remind['to']['person']['msg_id']
                              )
                         
                         group = None
@@ -99,7 +99,7 @@ class Scheduler:
                                 name=remind['to']['group']['name'],
                                 member_list=remind['to']['group']['member_list'],
                                 admin_id_list=remind['to']['group']['admin_id_list'],
-                                msg_id=remind['to']['group']['msg_id']
+                                # msg_id=remind['to']['group']['msg_id']
                             )
                         
                         to = SendTo(

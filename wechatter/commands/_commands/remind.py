@@ -110,14 +110,14 @@ def save_remind(to: SendTo, content: str, trigger_time: datetime) -> str:
                 "user_openid": to.person.user_openid if to.person else None,
                 "member_openid": to.person.member_openid if to.person else None,
                 "guild_id": to.person.guild_id if to.person else None,
-                "msg_id": to.person.msg_id if to.person else None
+                # "msg_id": to.person.msg_id if to.person else None
             },
             "group": {
                 "id": to.group.id if to.group else None,
                 "name": to.group.name if to.group else None,
                 "member_list": to.group.member_list if to.group else None,
                 "admin_id_list": to.group.admin_id_list if to.group else None,
-                "msg_id": to.group.msg_id if to.group else None
+                # "msg_id": to.group.msg_id if to.group else None
             },
             "g_id": to.g_id,
             "g_name": to.g_name
@@ -144,16 +144,16 @@ def view_reminds(person_id: str, person_name: str) -> str:
     """查看特定用户的所有提醒事项"""
     file_path = os.path.join(REMIND_DATA_PATH, f"{person_id}_reminds.json")
     if not os.path.exists(file_path):
-        return f"✨{person_name}的提醒列表✨\n暂无提醒事项。"
+        return f"⏰{person_name}的提醒列表⏰\n暂无提醒事项。"
 
     reminds = load_json(file_path)
     # 按触发时间排序
     reminds.sort(key=lambda x: datetime.strptime(x['trigger_time'], '%Y-%m-%d %H:%M:%S'))
 
     if not reminds:
-        return f"✨{person_name}的提醒列表✨\n暂无提醒事项。"
+        return f"⏰{person_name}的提醒列表⏰\n暂无提醒事项。"
 
-    formatted_reminds = f"✨{person_name}的提醒列表✨\n"
+    formatted_reminds = f"⏰{person_name}的提醒列表⏰\n"
     for i, remind in enumerate(reminds, 1):
         trigger_time = datetime.strptime(remind['trigger_time'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M')
         formatted_reminds += f"{i}. [{trigger_time}] {remind['content']}\n"
