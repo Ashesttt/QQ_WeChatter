@@ -4,6 +4,7 @@ from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from loguru import logger
+from sqlalchemy import true
 
 from wechatter.models import Person
 from wechatter.models.scheduler import CronTask
@@ -104,11 +105,15 @@ class Scheduler:
                             person=person,
                             group=group
                         )
+                        if to.g_id and to.g_name:
+                            _is_group = True
+                        else:
+                            _is_group = False
                         # 修改send_msg调用方式
                         sender.send_msg(
                             to=to,
                             message=f"⏰ 提醒: {remind['content']}",
-                            is_group=to.g_id is not None  # 根据是否有群组ID判断是否为群消息
+                            is_group=_is_group
                         )
                         logger.info(f"已发送提醒: {remind['content']} 给{to.p_id}")
                     except Exception as e:
